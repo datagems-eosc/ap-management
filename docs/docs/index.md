@@ -1,4 +1,4 @@
-# DataGEMS MoMa Management Api
+# DataGEMS AP Management Api
 
 This is the documentation site for the DataGEMS Analytical Pattern (AP) Management Api. The service is part of the wider [DataGEMS](https://datagems.eu/) platform. This is part of the overall [platform documentation](https://datagems-eosc.github.io/).
 
