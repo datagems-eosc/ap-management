@@ -1,6 +1,6 @@
 # Security
 
-Key aspects of the Security checklist and practices that DataGEMS services must pass have been defined in the processes and documents governing the platform development and quality assurance. In this section we present a selected subset of these that are directly, publicly available and affect the usage and configuration of the service.
+<!--Key aspects of the Security checklist and practices that DataGEMS services must pass have been defined in the processes and documents governing the platform development and quality assurance. In this section we present a selected subset of these that are directly, publicly available and affect the usage and configuration of the service.
 
 ## Authentication
 
@@ -54,3 +54,4 @@ These two flows are supported by the [DataGEMS AAI service](https://github.com/d
 ## Secrets
 
 Secrets are a special kind of configuration that requires special handling. This is described in the respective [Configuration](configuration.md) section.
+-->
