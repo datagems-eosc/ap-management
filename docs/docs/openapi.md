@@ -1,2 +1,2 @@
 
-[OAD(content/openapi.json)]
+<!--[OAD(content/openapi.json)]-->
