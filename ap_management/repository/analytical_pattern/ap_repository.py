@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from domain.pg_json import PgJson
+from ap_management.domain import PgJson
 
 
 class ApRepository(Protocol):
