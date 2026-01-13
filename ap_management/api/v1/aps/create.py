@@ -3,7 +3,7 @@ from logging import getLogger
 from fastapi import Depends, HTTPException, status
 
 from ap_management.di import get_ap_service
-from ap_management.domain import AnalyticalPattern, ApCreationFailed
+from ap_management.domain import AnalyticalPattern, ApCRUDFailure
 from ap_management.services.analytical_pattern import AnalyticalPatternService
 
 logger = getLogger(__name__)
@@ -15,7 +15,7 @@ async def create_ap(ap: AnalyticalPattern, svc: AnalyticalPatternService = Depen
 
         return {"id": id}
 
-    except ApCreationFailed as e:
+    except ApCRUDFailure as e:
         logger.error("Database connection failed", exc_info=e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

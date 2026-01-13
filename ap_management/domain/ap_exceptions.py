@@ -1,2 +1,2 @@
-class ApCreationFailed(Exception):
+class ApCRUDFailure(Exception):
     ...
