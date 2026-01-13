@@ -24,6 +24,12 @@ test_cases = [
     ApTestCase(
         asset_name="ap_sql_ko_double_root", reason="Two Analytical Pattern nodes", valid=False
     ),
+    ApTestCase(
+        asset_name="ap_sql_ko_cycle", reason="Graph is not a DAG", valid=False
+    ),
+    ApTestCase(
+        asset_name="ap_sql_ko_orphan", reason="Orphan node in graph", valid=False
+    ),
 ]
 # Only the valid tests.
 ok_test_cases = list(filter(lambda tc: tc.valid, test_cases))

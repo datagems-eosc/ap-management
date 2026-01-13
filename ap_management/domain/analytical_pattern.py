@@ -1,3 +1,4 @@
+from graphlib import CycleError
 from typing import Self, cast
 
 from deepdiff import DeepDiff
@@ -12,38 +13,45 @@ class AnalyticalPattern(PgJson):
 
     @model_validator(mode="after")
     def check_root_node(self: Self) -> Self:
-        """
-        Validate that the AP has a root node.
-        The root node have the following properties :
-        - Its label must contain "Analytical_Pattern"
-        - No edges must lead to it 
-
-        Beware : AP can be nested, so multiple "Analytical_Pattern" nodes can exists
-        """
-        # Find all the Analytical_Pattern nodes
         ROOT_LABEL = "Analytical_Pattern"
+
+        # Basic check
         ap_nodes = [n for n in self.nodes if ROOT_LABEL in n.labels]
         if not ap_nodes:
             raise ValueError(f"No '{ROOT_LABEL}' nodes found")
 
-        # Ensure there is only one root
-        match len(ap_nodes):
-            case 0:
-                raise ValueError(
-                    f"No root '{ROOT_LABEL}' node found (must have no incoming edges)"
-                )
-            case n if n > 1:
-                root_ids = ', '.join([n.id for n in ap_nodes])
-                raise ValueError(
-                    f"Multi-root AP detected (root nodes ids: {root_ids})"
-                )
+        if len(ap_nodes) > 1:
+            root_ids = ", ".join(n.id for n in ap_nodes)
+            raise ValueError(
+                f"Multi-root AP detected (root nodes ids: {root_ids})"
+            )
 
-        # Ensure the root has an id
-        # TODO: Should the id be generated if not found ?
-        if not ap_nodes[0].id:
-            raise ValueError("The root '{ROOT_LABEL}' node has no id !")
+        root = ap_nodes[0]
 
-        self._root = ap_nodes[0]
+        if not root.id:
+            raise ValueError(f"The root '{ROOT_LABEL}' node has no id!")
+
+        self._root = root
+
+        # Ensure the undirected graph is properly connected to the root
+        # i.e : "Ensure all nodes are reachable from the root, no matter the direction"
+        reachable = set(self._dfs_iter_undirected(self.root.id))
+        all_ids = {n.id for n in self.nodes}
+
+        if reachable != all_ids:
+            unreachable = ", ".join(sorted(all_ids - reachable))
+            raise ValueError(
+                f"Graph is not fully connected. "
+                f"Unreachable nodes from root: {unreachable}"
+            )
+
+        # Ensure there are no cycle even if we follow the directions
+        # TODO: To clarify, do we need this ?
+        try:
+            _ = list(self.topological_iterator())
+        except CycleError as e:
+            raise ValueError(f"The graph has a cycle! {e}") from e
+
         return self
 
     @property
