@@ -10,5 +10,20 @@ router = APIRouter(
 
 
 router.add_api_route(
-    "/", create_ap, methods=["POST"], status_code=status.HTTP_201_CREATED)
-router.add_api_route("/{id}", retrieve_ap, methods=["GET"])
+    "/", create_ap,
+    methods=["POST"],
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        500: {"description": "Database error or unexpected server error"},
+    }
+)
+
+router.add_api_route(
+    "/{id}", retrieve_ap,
+    methods=["GET"],
+    responses={
+        404: {"description": "Analytical Pattern not found"},
+        500: {"description": "Database error or unexpected server error"},
+    }
+)
+
