@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Dict, LiteralString, cast
+from typing import Dict, List, LiteralString, cast
 
 from neo4j import AsyncManagedTransaction, AsyncSession, AsyncTransaction, Record
 from neo4j.exceptions import Neo4jError
@@ -95,9 +95,9 @@ class Neo4jApRepository(ApRepository):
             logger.error("Neo4j failure while retrieving AP", exc_info=e)
             raise RepositoryError("Failed to retrieve AP") from e
 
-    def __sanitize_keys(self, props: Dict[str, str]) -> Dict[str, str]:
+    def __sanitize_properties(self, props: Dict[str, str]) -> Dict[str, str]:
         """
-        Remove invalid characters from labels
+        Remove invalid characters from properties keys
         Invalid characters | Replacement
         '-' -> '_'
         """
@@ -105,10 +105,16 @@ class Neo4jApRepository(ApRepository):
             return {}
         return {k.replace("-", "_"): v for k, v in props.items()}
 
+    def __escape_labels(self, labels: List[str]) -> List[str]:
+        """
+        Wrap labels in backticks. This allows separators like ":" to appear in labels 
+        """
+        return [f"`{label}`" for label in labels]
+
     async def __create_all_edges(self, tx: AsyncTransaction, graph: AnalyticalPattern) -> None:
         for edge in graph.edges:
-            labels = ":".join(edge.labels)
-            props = self.__sanitize_keys(edge.properties or {})
+            labels = ":".join(self.__escape_labels(edge.labels))
+            props = self.__sanitize_properties(edge.properties or {})
 
             query = f"""
             MATCH (a {{id: $from_id}})
@@ -131,8 +137,8 @@ class Neo4jApRepository(ApRepository):
 
     async def __create_all_nodes(self, tx: AsyncTransaction, graph: AnalyticalPattern) -> None:
         for node in graph.nodes:
-            labels = ":".join(node.labels)
-            props = self.__sanitize_keys(node.properties or {})
+            labels = ":".join(self.__escape_labels(node.labels))
+            props = self.__sanitize_properties(node.properties or {})
             props["id"] = node.id
 
             prop_assignments = ", ".join(f"{k}: ${k}" for k in props.keys())
