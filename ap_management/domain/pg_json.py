@@ -5,10 +5,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class PgJsonNode(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-
-    # Adds "@id" as a valid alias for "id"
-    # TODO : Remove this if not necessary
-    id: str = Field(alias="@id")
+    id: str
     labels: List[str]
     properties: Optional[Dict[str, Any]] = None
 
