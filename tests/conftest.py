@@ -1,6 +1,4 @@
-from json import loads
-from pathlib import Path
-from typing import AsyncGenerator, Dict, Generator
+from typing import AsyncGenerator, Generator
 
 import pytest
 import pytest_asyncio
@@ -9,8 +7,6 @@ from testcontainers.neo4j import Neo4jContainer
 
 from ap_management.repository.analytical_pattern import Neo4jApRepository
 from ap_management.services.analytical_pattern import AnalyticalPatternService
-
-FIXTURES_DIR = Path(__file__).resolve().parents[1] / "assets"
 
 
 @pytest.fixture
@@ -43,25 +39,3 @@ def neo4j_container() -> Generator[Neo4jContainer]:
     container.start()
     yield container
     container.stop()
-
-
-def load_asset(alias: str, as_json: bool = True) -> str:
-    """
-    Load a file by it's name with or without extension
-    Optionally parse it as Json
-    """
-    p = FIXTURES_DIR / alias
-    # Direct search, then search with any extension
-    if not p.exists():
-        matches = list(FIXTURES_DIR.glob(f"{alias}.*"))
-        if matches:
-            p = matches[0]
-        else:
-            p = FIXTURES_DIR / f"{alias}.json"
-
-    if not p.exists():
-        raise FileNotFoundError(
-            f"No fixture found for alias {alias!r} in {FIXTURES_DIR}")
-
-    text = p.read_text(encoding="utf-8")
-    return text

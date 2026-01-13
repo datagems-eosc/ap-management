@@ -1,6 +1,6 @@
 from typing import Protocol
 
-from ap_management.domain import PgJson
+from ap_management.domain import AnalyticalPattern
 
 
 class ApRepository(Protocol):
@@ -9,7 +9,9 @@ class ApRepository(Protocol):
     This decorellate AP representation from their physical storage
     """
 
-    async def create(self, ap: PgJson) -> None: ...
+    async def create(self, ap: AnalyticalPattern) -> None: ...
+
+    async def get(self, id: str) -> AnalyticalPattern | None: ...
 
 
 class RepositoryError(Exception):

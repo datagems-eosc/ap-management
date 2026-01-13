@@ -1,5 +1,6 @@
-from typing import Self
+from typing import Self, cast
 
+from deepdiff import DeepDiff
 from pydantic import model_validator
 
 from .pg_json import PgJson, PgJsonNode
@@ -49,3 +50,39 @@ class AnalyticalPattern(PgJson):
     def root(self) -> PgJsonNode:
         """Return the AP root node"""
         return self._root
+
+    def normalize(self) -> Self:
+        """
+        Normalize the AP in place:
+        - Sorts nodes by id
+        - Sorts edges by from_, to, labels
+        - Sorts labels alphabetically
+        """
+        for n in self.nodes:
+            if getattr(n, "labels", None):
+                n.labels = sorted(n.labels)
+        self.nodes.sort(key=lambda n: n.id)
+
+        for e in self.edges:
+            if getattr(e, "labels", None):
+                e.labels = sorted(e.labels)
+        self.edges.sort(key=lambda e: (e.from_, e.to, tuple(e.labels)))
+        return self
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, AnalyticalPattern):
+            return NotImplemented
+
+        # Simple assertions before doing the expensive computation
+        assert other is not None
+        assert len(other.nodes) == len(other.nodes)
+        assert len(other.edges) == len(other.edges)
+
+        # NOTE : Casting to Self is not necessary but it prevent a warning
+        # as Pylance doesn't recognize the pseudo class "Self" as the same as
+        # the complete class "Analytical pattern"
+        # So this is safe to do
+        return self.difference(cast(Self, other)) == {}
+
+    def difference(self, other: Self) -> DeepDiff:
+        return DeepDiff(self.normalize(), other.normalize(), ignore_order=True)
