@@ -2,6 +2,7 @@ from fastapi import APIRouter, status
 
 from .create import create_ap
 from .retrieve import retrieve_ap
+from .validate import validate_ap
 
 router = APIRouter(
     prefix="/aps",
@@ -27,3 +28,4 @@ router.add_api_route(
     }
 )
 
+router.add_api_route("/validate", validate_ap, methods=["POST"])

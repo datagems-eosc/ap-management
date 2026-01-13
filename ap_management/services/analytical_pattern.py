@@ -1,7 +1,10 @@
 
 from logging import getLogger
+from typing import List
 
-from ap_management.domain import AnalyticalPattern, ApCRUDFailure
+from pydantic import ValidationError
+
+from ap_management.domain import AnalyticalPattern, ApCRUDFailure, PgJson
 from ap_management.repository.analytical_pattern import ApRepository, RepositoryError
 
 logger = getLogger(__name__)
@@ -41,3 +44,22 @@ class AnalyticalPatternService:
             raise ApCRUDFailure(
                 "Could not retrieve analytical pattern"
             ) from e
+
+    def validate(self, candidate: PgJson) -> List[str]:
+        """
+        Ensures a PG-JSON model is a valid analytical pattern.
+        Returns the list of errors encountered.
+        """
+        errors: List[str] = []
+        try:
+            AnalyticalPattern.model_validate(candidate.model_dump())
+        except ValidationError as ex:
+            # Pydantic field / model validation errors
+            errors = [e["msg"] for e in ex.errors()]
+        except ValueError as ex:
+            # model_validator(after) errors
+            errors = [str(ex)]
+        except AssertionError as ex:
+            errors = [str(ex)]
+
+        return errors
