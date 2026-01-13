@@ -7,16 +7,15 @@ class PgJsonNode(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
     id: str
     labels: List[str]
-    properties: Optional[Dict[str, Any]] = None
+    properties: Optional[Dict[str, Any]] = {}
 
 
 class PgJsonEdge(BaseModel):
     model_config = ConfigDict(populate_by_name=True)
-
     from_: str = Field(alias="from")
     labels: List[str]
     to: str
-    properties: Optional[Dict[str, Any]] = None
+    properties: Optional[Dict[str, Any]] = {}
 
     @property
     def from_id(self) -> str:
