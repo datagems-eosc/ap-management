@@ -1,2 +1,7 @@
-class CrudFailure(Exception):
+class CrudError(Exception):
+    ...
+
+
+class NotFoundError(Exception):
+    """Raised when a resource is not found"""
     ...

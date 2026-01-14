@@ -11,9 +11,9 @@ from ap_management.services.task import TaskService
 
 
 @pytest.fixture
-def task_svc(task_repository: Neo4jTaskRepository) -> TaskService:
+def task_svc(task_repository: Neo4jTaskRepository, ap_repository: Neo4jApRepository) -> TaskService:
     """TaskService for testing purposes."""
-    return TaskService(task_repository)
+    return TaskService(task_repository, ap_repository)
 
 
 @pytest_asyncio.fixture

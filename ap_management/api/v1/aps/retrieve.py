@@ -3,7 +3,7 @@ from logging import getLogger
 from fastapi import Depends, HTTPException, Path, status
 
 from ap_management.di import get_ap_service
-from ap_management.domain import AnalyticalPattern, CrudFailure
+from ap_management.domain import AnalyticalPattern, CrudError
 from ap_management.services.analytical_pattern import AnalyticalPatternService
 
 logger = getLogger(__name__)
@@ -22,7 +22,7 @@ async def retrieve_ap(id: str = Path(..., description="The Analytical Pattern No
 
         return ap
 
-    except CrudFailure as e:
+    except CrudError as e:
         logger.error("Database connection failed", exc_info=e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

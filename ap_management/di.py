@@ -65,5 +65,8 @@ async def get_task_repo(session: AsyncSession = Depends(get_db_conn)) -> TaskRep
     return Neo4jTaskRepository(session)
 
 
-def get_task_service(repo: TaskRepository = Depends(get_task_repo)) -> TaskService:
-    return TaskService(repo)
+def get_task_service(
+    task_repo: TaskRepository = Depends(get_task_repo),
+    ap_repo: ApRepository = Depends(get_ap_repo)
+) -> TaskService:
+    return TaskService(task_repo, ap_repo)

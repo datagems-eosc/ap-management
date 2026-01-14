@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, status
 from pydantic import BaseModel
 
 from ap_management.di import get_task_service
-from ap_management.domain import CrudFailure
+from ap_management.domain import CrudError
 from ap_management.services.task import TaskService
 
 logger = getLogger(__name__)
@@ -32,7 +32,7 @@ async def create_task(input: CreateTaskInput, svc: TaskService = Depends(get_tas
         )
         return CreatePayload(id=task.id)
 
-    except CrudFailure as e:
+    except CrudError as e:
         logger.error("Database connection failed", exc_info=e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

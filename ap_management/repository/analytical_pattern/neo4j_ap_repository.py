@@ -1,4 +1,5 @@
 from logging import getLogger
+from typing import Any, Dict, List
 
 from neo4j import AsyncManagedTransaction, AsyncSession, Record
 from neo4j.exceptions import Neo4jError
@@ -67,3 +68,26 @@ class Neo4jApRepository(Neo4jPgJsonMixin, ApRepository):
         except (Neo4jError, ValidationError) as e:
             logger.error("Neo4j failure while retrieving AP", exc_info=e)
             raise RepositoryError("Failed to retrieve AP") from e
+
+    async def get_by_task_id(self, task_id: str) -> List[str]:
+        async def _tx(tx: AsyncManagedTransaction) -> List[Dict[str, Any]]:
+            # TODO Check cypher query
+            result = await tx.run(
+                """//cypher
+                // Get all Analytical Pattern nodes linked to the Task ID
+                MATCH (t:Task {id: $task_id})-[:is_achieved]->(ap:Analytical_Pattern)
+                RETURN ap.id AS ap_id
+                """,
+                {"task_id": task_id},
+            )
+            return await result.data()
+
+        try:
+            records = await self._session.execute_read(_tx)
+            ap_ids = [record["ap_id"] for record in records]
+            return ap_ids
+
+        except Neo4jError as e:
+            logger.error(
+                "Neo4j failure while retrieving APs by Task ID", exc_info=e)
+            raise RepositoryError("Failed to retrieve APs by Task ID") from e

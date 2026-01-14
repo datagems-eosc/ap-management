@@ -1,10 +1,12 @@
 from logging import getLogger
 
-from neo4j import AsyncSession
+from neo4j import AsyncManagedTransaction, AsyncSession, Record
 from neo4j.exceptions import Neo4jError
+from pydantic import ValidationError
 
 from ap_management.domain import PgJsonNode
 from ap_management.repository.neo4j_pgson_mixin import Neo4jPgJsonMixin
+from ap_management.repository.repository_error import RepositoryError
 
 from .task_repository import TaskRepository
 
@@ -34,4 +36,27 @@ class Neo4jTaskRepository(Neo4jPgJsonMixin, TaskRepository):
             raise
 
     async def get(self, id: str) -> PgJsonNode | None:
-        raise NotImplementedError("Method not implemented yet")
+        async def _tx(tx: AsyncManagedTransaction) -> Record | None:
+            result = await tx.run(
+                """//cypher
+                MATCH (task:Task {id: $id})
+                RETURN [task] AS nodes, [] AS edges
+                """,
+                {"id": id},
+            )
+            return await result.single()
+
+        try:
+            record = await self._session.execute_read(_tx)
+            if record is None:
+                return None
+            pg_json = self._records_to_pgson(record)
+
+            if not pg_json.nodes:
+                return None
+
+            return PgJsonNode.model_validate(pg_json.nodes[0].model_dump())
+
+        except (Neo4jError, ValidationError) as e:
+            logger.error("Neo4j failure while retrieving task", exc_info=e)
+            raise RepositoryError("Failed to retrieve task") from e

@@ -39,6 +39,8 @@ class AnalyticalPattern(PgJson):
         reachable = set(self._dfs_iter_undirected(self.root.id))
         all_ids = {n.id for n in self.nodes}
 
+        # TODO : reachable > all_ids : missing node
+        # reachable < all_ids : unreachable node, missing edges
         if reachable != all_ids:
             unreachable = ", ".join(sorted(all_ids - reachable))
             raise ValueError(
@@ -48,6 +50,7 @@ class AnalyticalPattern(PgJson):
 
         # Ensure there are no cycle even if we follow the directions
         # TODO: To clarify, do we need this ?
+        # TODO: Remove this
         try:
             _ = list(self.topological_iterator())
         except CycleError as e:
