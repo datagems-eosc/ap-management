@@ -5,8 +5,14 @@ from typing import AsyncGenerator
 from fastapi import Depends, FastAPI
 from neo4j import AsyncDriver, AsyncGraphDatabase, AsyncSession
 
-from ap_management.repository.analytical_pattern import ApRepository, Neo4jApRepository
+from ap_management.repository import (
+    ApRepository,
+    Neo4jApRepository,
+    Neo4jTaskRepository,
+    TaskRepository,
+)
 from ap_management.services.analytical_pattern import AnalyticalPatternService
+from ap_management.services.task import TaskService
 
 NEO4J_URI = getenv("NEO4J_URI", "")
 NEO4J_USER = getenv("NEO4J_USER", "")
@@ -50,3 +56,14 @@ async def get_ap_repo(session: AsyncSession = Depends(get_db_conn)) -> ApReposit
 
 def get_ap_service(repo: ApRepository = Depends(get_ap_repo)) -> AnalyticalPatternService:
     return AnalyticalPatternService(repo)
+
+
+async def get_task_repo(session: AsyncSession = Depends(get_db_conn)) -> TaskRepository:
+    """
+    Return the physical storage facade to store Tasks
+    """
+    return Neo4jTaskRepository(session)
+
+
+def get_task_service(repo: TaskRepository = Depends(get_task_repo)) -> TaskService:
+    return TaskService(repo)

@@ -1,11 +1,17 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, status
+
+from .create import create_task
 
 router = APIRouter(
     prefix="/tasks",
     tags=["tasks"],
 )
 
-
-@router.get("")
-def list_tasks():
-    return []
+router.add_api_route(
+    "/", create_task,
+    methods=["POST"],
+    status_code=status.HTTP_201_CREATED,
+    responses={
+        500: {"description": "Database error or unexpected server error"},
+    }
+)

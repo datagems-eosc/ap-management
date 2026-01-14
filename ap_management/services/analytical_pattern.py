@@ -4,8 +4,8 @@ from typing import List
 
 from pydantic import ValidationError
 
-from ap_management.domain import AnalyticalPattern, ApCRUDFailure, PgJson
-from ap_management.repository.analytical_pattern import ApRepository, RepositoryError
+from ap_management.domain import AnalyticalPattern, CrudFailure, PgJson
+from ap_management.repository import ApRepository, RepositoryError
 
 logger = getLogger(__name__)
 
@@ -27,7 +27,7 @@ class AnalyticalPatternService:
 
             return ap.root.id
         except RepositoryError as e:
-            raise ApCRUDFailure(
+            raise CrudFailure(
                 "Could not create analytical pattern"
             ) from e
 
@@ -41,7 +41,7 @@ class AnalyticalPatternService:
         try:
             return await self._repo.get(id)
         except RepositoryError as e:
-            raise ApCRUDFailure(
+            raise CrudFailure(
                 "Could not retrieve analytical pattern"
             ) from e
 

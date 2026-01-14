@@ -4,7 +4,7 @@ from fastapi import Depends, HTTPException, status
 from pydantic import BaseModel
 
 from ap_management.di import get_ap_service
-from ap_management.domain import AnalyticalPattern, ApCRUDFailure
+from ap_management.domain import AnalyticalPattern, CrudFailure
 from ap_management.services.analytical_pattern import AnalyticalPatternService
 
 logger = getLogger(__name__)
@@ -23,7 +23,7 @@ async def create_ap(ap: AnalyticalPattern, svc: AnalyticalPatternService = Depen
 
         return CreatePayload(id=id)
 
-    except ApCRUDFailure as e:
+    except CrudFailure as e:
         logger.error("Database connection failed", exc_info=e)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,

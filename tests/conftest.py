@@ -5,8 +5,28 @@ import pytest_asyncio
 from neo4j import AsyncGraphDatabase
 from testcontainers.neo4j import Neo4jContainer
 
-from ap_management.repository.analytical_pattern import Neo4jApRepository
+from ap_management.repository import Neo4jApRepository, Neo4jTaskRepository
 from ap_management.services.analytical_pattern import AnalyticalPatternService
+from ap_management.services.task import TaskService
+
+
+@pytest.fixture
+def task_svc(task_repository: Neo4jTaskRepository) -> TaskService:
+    """TaskService for testing purposes."""
+    return TaskService(task_repository)
+
+
+@pytest_asyncio.fixture
+async def task_repository(neo4j_container: Neo4jContainer) -> AsyncGenerator[Neo4jTaskRepository]:
+    """Provide a TaskRepository using AsyncSession."""
+    uri = neo4j_container.get_connection_url()
+    auth = (neo4j_container.username, neo4j_container.password)
+    driver = AsyncGraphDatabase.driver(uri, auth=auth)
+
+    async with driver.session() as session:
+        yield Neo4jTaskRepository(session)
+
+    await driver.close()
 
 
 @pytest.fixture
