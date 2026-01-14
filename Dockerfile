@@ -12,14 +12,16 @@ COPY pyproject.toml /app/pyproject.toml
 # Install dependencies
 RUN uv sync --frozen --no-install-project
 
+# External dependencies
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y graphviz \
+    && rm -rf /var/lib/apt/lists/*
+
 # Copy the project into the image
 COPY . /app
 
 # Sync the project
 RUN uv sync --frozen
 
-# External dependencies
-RUN apt-get update \
-    && DEBIAN_FRONTEND=noninteractive apt-get install -y graphviz \
-    && rm -rf /var/lib/apt/lists/*
+
 CMD [ "python", "provenance_demo/foo.py" ]
