@@ -48,14 +48,6 @@ class AnalyticalPattern(PgJson):
                 f"Unreachable nodes from root: {unreachable}"
             )
 
-        # Ensure there are no cycle even if we follow the directions
-        # TODO: To clarify, do we need this ?
-        # TODO: Remove this
-        try:
-            _ = list(self.topological_iterator())
-        except CycleError as e:
-            raise ValueError(f"The graph has a cycle! {e}") from e
-
         return self
 
     @property

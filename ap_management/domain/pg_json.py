@@ -1,5 +1,4 @@
 from collections import defaultdict
-from graphlib import TopologicalSorter
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -57,25 +56,6 @@ class PgJson(BaseModel):
             yield current
 
             stack.extend(e.to for e in self.get_edges_from(current))
-
-    def topological_iterator(self) -> Iterator[str]:
-        """
-            Return the node ids in a topological order (i.e reading those without dependencies first)
-
-            Warning : 
-             - This creates a shallow copy of the graph
-             - The recursive DFS method is not used to avoid using recursion all together
-             - A more clever approach can be considered in the future  
-        """
-        ts = TopologicalSorter()
-
-        for node in self.nodes:
-            ts.add(node.id)
-
-        for edge in self.edges:
-            ts.add(edge.to, edge.from_)
-
-        return ts.static_order()  # type: ignore
 
     def _dfs_iter_undirected(self, start_id: str) -> Iterator[str]:
         """
