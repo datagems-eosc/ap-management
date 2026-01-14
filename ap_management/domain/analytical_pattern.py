@@ -39,15 +39,22 @@ class AnalyticalPattern(PgJson):
         reachable = set(self._dfs_iter_undirected(self.root.id))
         all_ids = {n.id for n in self.nodes}
 
-        # TODO : reachable > all_ids : missing node
-        # reachable < all_ids : unreachable node, missing edges
         if reachable != all_ids:
-            unreachable = ", ".join(sorted(all_ids - reachable))
-            raise ValueError(
-                f"Graph is not fully connected. "
-                f"Unreachable nodes from root: {unreachable}"
-            )
+            if reachable - all_ids:
+                # Reaching more nodes than existing ones -> An edge references a missing node
+                extra = ", ".join(sorted(reachable - all_ids))
+                raise ValueError(
+                    f"Graph traversal returned unknown node IDs: {extra}. "
+                    f"Edges may reference missing nodes."
+                )
 
+            if all_ids - reachable:
+                # There are nodes not reachable from the root
+                unreachable = ", ".join(sorted(all_ids - reachable))
+                raise ValueError(
+                    f"Graph is not fully connected. "
+                    f"Unreachable nodes from root: {unreachable}"
+                )
         return self
 
     @property
