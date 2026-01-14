@@ -16,10 +16,12 @@ class ApTestCase(BaseModel):
 
 
 test_cases = [
-    ApTestCase(asset_name="ap_sql_select_with_task", reason="with a task"),
     ApTestCase(
         asset_name="ap_sql_select_without_task", reason="without a task"
     ),
+    ApTestCase(asset_name="ap_sql_select_with_task",
+               reason="with a task", valid=False),
+
     ApTestCase(
         asset_name="ap_sql_ko_double_root", reason="Two Analytical Pattern nodes", valid=False
     ),

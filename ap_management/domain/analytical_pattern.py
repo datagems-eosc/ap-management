@@ -34,6 +34,17 @@ class AnalyticalPattern(PgJson):
 
         self._root = root
 
+        # Check that the root node is truly a root (no edges lead to it)
+        edges_to_root = [e for e in self.edges if e.to == root.id]
+        if edges_to_root:
+            edge_sources = ", ".join(
+                f"({e.from_} -> {e.to})" for e in edges_to_root)
+            raise ValueError(
+                f"The root '{ROOT_LABEL}' node is not a root. "
+                f"The following edges lead to it: {edge_sources}"
+                "Did you leave the Task node in the AP graph?"
+            )
+
         # Ensure the undirected graph is properly connected to the root
         # i.e : "Ensure all nodes are reachable from the root, no matter the direction"
         reachable = set(self._dfs_iter_undirected(self.root.id))

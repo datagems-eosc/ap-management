@@ -34,24 +34,26 @@ class Neo4jApRepository(Neo4jPgJsonMixin, ApRepository):
         async def _tx(tx: AsyncManagedTransaction) -> Record | None:
             result = await tx.run(
                 """//cypher
-                // Get the root by id 
+                // Get the root Analytical_Pattern by id 
                 MATCH (root:Analytical_Pattern {id: $id})
-                // Find all children and ancestors with a distance >=1
-                MATCH p = (root)-[*1..]-(n)
-                // Gather everything with a list of nodes and a list of relationship per node
-                // so relLists = [relationships(node_1), .., relationships(node_n)]
-                //             = [ [node_1_rel_1, ... node_1_rel_n], ..., [node_n_rel_1, ... node_n_rel_n]]
-                WITH
-                    collect(DISTINCT n) AS allNodes,
-                    collect(DISTINCT relationships(p)) AS relLists
-                // UNDWIND is a glorified foreach, so for each list of relationship is the list of list
-                UNWIND relLists AS relList
-                // And for each relationship in each relationship list
-                UNWIND relList AS rel
-                // Flatten and dedup
-                RETURN
-                    allNodes AS nodes,
-                    collect(DISTINCT rel) AS edges
+                // Find all operators that are part of this AP (consist_of relationship)
+                MATCH (root)-[:consist_of]->(operator:Operator)
+                // Find all data and models connected to these operators
+                OPTIONAL MATCH (operator)-[rel1:input|output|perform]->(data)
+                OPTIONAL MATCH (data)-[rel2:input|output|perform]->(operator)
+                // Collect all nodes: root, operators, and connected data/models
+                WITH 
+                    root, 
+                    collect(DISTINCT operator) AS operators,
+                    collect(DISTINCT data) AS dataNodes
+                // Collect all nodes together
+                WITH [root] + operators + dataNodes AS allNodes
+                // Collect all relationships between these nodes
+                UNWIND allNodes AS node1
+                OPTIONAL MATCH (node1)-[rel]->(node2)
+                WHERE node2 IN allNodes
+                WITH allNodes, collect(DISTINCT rel) AS edges
+                RETURN allNodes AS nodes, edges
                 """,
                 {"id": id},
             )
