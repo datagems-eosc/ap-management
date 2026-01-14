@@ -1,6 +1,7 @@
 from fastapi import APIRouter, status
 
 from .create import create_ap
+from .display import display_ap
 from .retrieve import retrieve_ap
 from .validate import validate_ap
 
@@ -25,6 +26,17 @@ router.add_api_route(
     responses={
         404: {"description": "Analytical Pattern not found"},
         500: {"description": "Database error or unexpected server error"},
+    }
+)
+
+router.add_api_route(
+    "/display", display_ap,
+    methods=["POST"],
+    responses={
+        200: {
+            "content": {"image/svg+xml": {}},
+            "description": "SVG representation of the Analytical Pattern",
+        }
     }
 )
 

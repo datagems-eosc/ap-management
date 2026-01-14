@@ -1,5 +1,5 @@
 # Install uv
-FROM python:3.12-slim
+FROM python:3.13-slim
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /bin/uv
 
 # Change the working directory to the `app` directory
@@ -18,4 +18,8 @@ COPY . /app
 # Sync the project
 RUN uv sync --frozen
 
+# External dependencies
+RUN apt-get update \
+    && DEBIAN_FRONTEND=noninteractive apt-get install -y graphviz \
+    && rm -rf /var/lib/apt/lists/*
 CMD [ "python", "provenance_demo/foo.py" ]

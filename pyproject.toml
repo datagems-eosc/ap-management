@@ -17,6 +17,7 @@ dependencies = [
     "deepdiff>=8.6.1",
     "dotenv>=0.9.9",
     "fastapi[standard]>=0.128.0",
+    "graphviz>=0.21",
     "neo4j>=6.0.3",
     "pydantic>=2.12.5",
 ]

@@ -2,6 +2,7 @@ from graphlib import CycleError
 from typing import Self, cast
 
 from deepdiff import DeepDiff
+from graphviz import Digraph
 from pydantic import model_validator
 
 from .pg_json import PgJson, PgJsonNode
@@ -94,3 +95,23 @@ class AnalyticalPattern(PgJson):
 
     def difference(self, other: Self) -> DeepDiff:
         return DeepDiff(self.normalize(), other.normalize(), ignore_order=True)
+
+    def render_to_svg(self) -> str:
+        """
+        Render the analytical pattern graph to SVG format using Graphviz.
+
+        Returns:
+            str: SVG representation of the graph
+        """
+        graph = Digraph(format="svg")
+        graph.attr(rankdir="TB", bgcolor="transparent")
+
+        for node in self.nodes:
+            labels = ", ".join(node.labels)
+            graph.node(node.id, label=f"{node.id}\n[{labels}]", shape="box")
+
+        for edge in self.edges:
+            edge_label = ", ".join(edge.labels) if edge.labels else ""
+            graph.edge(edge.from_, edge.to, label=edge_label)
+
+        return graph.pipe(format="svg", encoding="utf-8")
