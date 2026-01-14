@@ -1,12 +1,10 @@
 from logging import getLogger
-from typing import Dict, Optional
-from uuid import uuid4
 
 from fastapi import Depends, HTTPException, status
 from pydantic import BaseModel
 
 from ap_management.di import get_task_service
-from ap_management.domain import CrudFailure, PgJsonNode
+from ap_management.domain import CrudFailure
 from ap_management.services.task import TaskService
 
 logger = getLogger(__name__)
@@ -25,7 +23,7 @@ class CreatePayload(BaseModel):
 
 async def create_task(input: CreateTaskInput, svc: TaskService = Depends(get_task_service)) -> CreatePayload:
     """
-    Registers a new Analytical Pattern
+    Registers a new Task
     """
     try:
         task = await svc.create(

@@ -1,5 +1,4 @@
 import pytest
-from deepdiff import DeepDiff
 from pydantic import BaseModel
 
 from ap_management.domain import AnalyticalPattern, PgJson
