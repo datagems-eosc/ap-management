@@ -23,7 +23,8 @@
                 "ms-python.bandit",
                 "ms-python.debugpy",
                 "yzhang.markdown-all-in-one",
-                "neo4j-extensions.neo4j-for-vscode"
+                "neo4j-extensions.neo4j-for-vscode",
+                "redhat.vscode-yaml"
             ],
             "settings": {
                 "editor.defaultFormatter": "charliermarsh.ruff",

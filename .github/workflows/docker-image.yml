@@ -3,7 +3,7 @@ name: Build and Push Docker Image
 on:
   push:
     tags:
-      - 'v*'
+      - "v*"
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -38,7 +38,7 @@ jobs:
           labels: |
             org.opencontainers.image.source=https://github.com/datagems-eosc/web-api-demo
 
-      - name: Build and push Docker image
+      - name: Build testing Docker image
         id: build-test
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
@@ -49,9 +49,9 @@ jobs:
           labels: ${{ steps.meta.outputs.labels }}
 
       - name: Run tests
-        run: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock ${{ steps.build-test.outputs.tags }}
+        run: docker run --rm -v /var/run/docker.sock:/var/run/docker.sock ${{ steps.build-test.outputs.imageid }}
 
-      - name: Build and push Docker image
+      - name: Build and push production Docker image
         id: build-prod
         uses: docker/build-push-action@f2a1d5e99d037542a71f64918e516c093c6f3fc4
         with:
