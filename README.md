@@ -39,9 +39,4 @@ Tests use testcontainers to run a Neo4j instance automatically.
 
 ## Documentation
 
-Full API documentation is available in the [docs](docs/) directory, including:
-
-- [API Overview](docs/docs/api-overview.md)
-- [Architecture](docs/docs/architecture.md)
-- [Configuration](docs/docs/configuration.md)
-- [Deployment](docs/docs/deployment.md)
+Full documentation is available at: https://datagems-eosc.github.io/ap-management/
