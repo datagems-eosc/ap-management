@@ -1,5 +1,6 @@
 import logging
 from importlib.metadata import version
+from os import getenv
 from pathlib import Path
 from tomllib import loads as loads_toml
 
@@ -14,16 +15,18 @@ logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 load_dotenv()
-
 # Retrieve current project version from toml
 pyproject = loads_toml(Path("pyproject.toml").read_text())
 project_version = pyproject["project"]["version"]
+
+ROOT_PATH = getenv("ROOT_PATH", "")
 
 app = FastAPI(
     title="Analytical Pattern Management API",
     description="API to manage AP",
     lifespan=container_lifespan,
     version=project_version,
+    root_path=ROOT_PATH,
 )
 
 
