@@ -20,7 +20,7 @@ Analytical Patterns are used to understand, document, and analyze complex data w
 - [Deployment](deployment.md) - Deployment guides for various environments
 - [Architecture](architecture.md) - Technical architecture details
 
-## Getting Started 
+## Getting Started
 
 The best solution is to use the provided .devcontainer file. The neo4j database will already be configured.
 
@@ -31,7 +31,7 @@ To run it locally without the devcontainer:
 uv sync --all-groups
 cp .env.example .env
 # (Fill all the required variable in .env)
-un run ap_management/main.py
+uv run ap_management/main.py
 
 ```
 
