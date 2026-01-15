@@ -73,7 +73,6 @@ class Neo4jApRepository(Neo4jPgJsonMixin, ApRepository):
 
     async def get_by_task_id(self, task_id: str) -> List[str]:
         async def _tx(tx: AsyncManagedTransaction) -> List[Dict[str, Any]]:
-            # TODO Check cypher query
             result = await tx.run(
                 """//cypher
                 // Get all Analytical Pattern nodes linked to the Task ID
