@@ -1,5 +1,4 @@
 import logging
-from importlib.metadata import version
 from os import getenv
 from pathlib import Path
 from tomllib import loads as loads_toml
@@ -7,14 +6,18 @@ from tomllib import loads as loads_toml
 import uvicorn
 from dotenv import load_dotenv
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from ap_management.api.v1.routes import router
 from ap_management.di import container_lifespan
 
+load_dotenv()
+
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-load_dotenv()
+
 # Retrieve current project version from toml
 pyproject = loads_toml(Path("pyproject.toml").read_text())
 project_version = pyproject["project"]["version"]
@@ -29,11 +32,24 @@ app = FastAPI(
     root_path=ROOT_PATH,
 )
 
+# Only enable CORS if environment variable is set
+CORS_ORIGINS = getenv("CORS_ORIGINS")
+if CORS_ORIGINS:
+    cors_origins = [origin.strip()
+                    for origin in CORS_ORIGINS.split(",") if origin.strip()]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=cors_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+    )
+
 
 @app.get("/")
 def index():
     return {
-        "service": "Provenance Demo",
+        "service": "Ap Management",
         "version": app.version
     }
 
