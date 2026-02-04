@@ -2,6 +2,7 @@ from contextlib import asynccontextmanager
 from os import getenv
 from typing import AsyncGenerator
 
+from dotenv import load_dotenv
 from fastapi import Depends, FastAPI
 from neo4j import AsyncDriver, AsyncGraphDatabase, AsyncSession
 
@@ -14,9 +15,16 @@ from ap_management.repository import (
 from ap_management.services.analytical_pattern import AnalyticalPatternService
 from ap_management.services.task import TaskService
 
+# NOTE: Dotenv can be loaded multiple times without issue
+load_dotenv()
+
 NEO4J_URI = getenv("NEO4J_URI", "")
 NEO4J_USER = getenv("NEO4J_USER", "")
 NEO4J_PASSWORD = getenv("NEO4J_PASSWORD", "")
+SCHEMA_REGISTRY_BASE_URL = getenv("SCHEMA_REGISTRY_BASE_URL", "")
+
+assert NEO4J_URI, "NEO4J_URI must be set"
+assert SCHEMA_REGISTRY_BASE_URL, "SCHEMA_REGISTRY_BASE_URL must be set"
 
 driver: AsyncDriver
 
@@ -55,7 +63,7 @@ async def get_ap_repo(session: AsyncSession = Depends(get_db_conn)) -> ApReposit
 
 
 def get_ap_service(repo: ApRepository = Depends(get_ap_repo)) -> AnalyticalPatternService:
-    return AnalyticalPatternService(repo)
+    return AnalyticalPatternService(repo, SCHEMA_REGISTRY_BASE_URL)
 
 
 async def get_task_repo(session: AsyncSession = Depends(get_db_conn)) -> TaskRepository:

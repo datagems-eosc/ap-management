@@ -1,10 +1,12 @@
 
 from logging import getLogger
-from typing import List
+from typing import Any, List
 
 from pydantic import ValidationError
 
 from ap_management.domain import AnalyticalPattern, CrudError, PgJson
+from ap_management.domain.analytical_pattern_schema_registry import ApSchemaRegistry
+from ap_management.domain.exceptions import SchemaNotFoundError, SchemaUnavailableError
 from ap_management.repository import ApRepository, RepositoryError
 
 logger = getLogger(__name__)
@@ -13,9 +15,11 @@ logger = getLogger(__name__)
 class AnalyticalPatternService:
 
     _repo: ApRepository
+    _schema_registry_base_url: str
 
-    def __init__(self, repo: ApRepository):
+    def __init__(self, repo: ApRepository, schema_registry_base_url: str):
         self._repo = repo
+        self._schema_registry_base_url = schema_registry_base_url
 
     async def create(self, ap: AnalyticalPattern) -> str:
         """
@@ -45,14 +49,26 @@ class AnalyticalPatternService:
                 "Could not retrieve analytical pattern"
             ) from e
 
-    def validate(self, candidate: PgJson) -> List[str]:
+    async def validate(self, schema_uri: str, candidate: PgJson) -> List[Any]:
         """
         Ensures a PG-JSON model is a valid analytical pattern.
         Returns the list of errors encountered.
         """
-        errors: List[str] = []
+        errors: List[Any] = []
         try:
-            AnalyticalPattern.model_validate(candidate.model_dump())
+            # Validate PG-JSON shape with the Pydantic model first.
+            ap = AnalyticalPattern.model_validate(candidate.model_dump())
+            registry = ApSchemaRegistry(self._schema_registry_base_url)
+            errors = await registry.validate(ap, schema_uri)
+            return errors
+        except SchemaNotFoundError as ex:
+            # Schema does not exist (404)
+            logger.error(f"Schema not found: {ex}")
+            raise
+        except SchemaUnavailableError as ex:
+            # Schema service unavailable (5xx or connection error)
+            logger.error(f"Schema service unavailable: {ex}")
+            raise
         except ValidationError as ex:
             # Pydantic field / model validation errors
             errors = [e["msg"] for e in ex.errors()]

@@ -40,4 +40,11 @@ router.add_api_route(
     }
 )
 
-router.add_api_route("/validate", validate_ap, methods=["POST"])
+router.add_api_route(
+    "/validate", validate_ap,
+    methods=["POST"],
+    responses={
+        404: {"description": "Validation schema not found"},
+        503: {"description": "Schema validation service is currently unavailable"},
+    }
+)
