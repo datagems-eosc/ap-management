@@ -1,0 +1,292 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "ap-common",
+  "title": "Common Analytical Pattern Schema",
+  "description": "Common structure shared by all Analytical Pattern graphs with UUID validation, camelCase property naming, and edge relationship validation",
+  "validateEdgeRelationships": true,
+  "x-schema-description": "## Validation Rules\n\nThis schema enforces the common structure for all Analytical Patterns.\n\n### Node Requirements\n\n- **ID Format**: All node IDs must be valid UUIDs\n- **Minimum Count**: At least one node required\n- **Property Names**: Must follow camelCase convention (start with lowercase letter or @, followed by alphanumeric characters)\n\n### Edge Requirements\n\n- **Minimum Count**: At least one edge required\n- **Edge Relationship Validation**: Validates that edge labels match allowed relationships between node types (e.g., consist_of: Analytical_Pattern → Operator)\n- **Edge Relationship Rules**: See x-edge-relationship-rules for complete mapping of allowed node-to-node relationships\n\n### Additional Properties\n\nAdditional properties are allowed for extensibility.",
+  "type": "object",
+  "required": [
+    "nodes",
+    "edges"
+  ],
+  "additionalProperties": true,
+  "properties": {
+    "nodes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "labels"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "labels": {
+            "type": "array",
+            "minItems": 1
+          },
+          "properties": {
+            "type": "object",
+            "additionalProperties": true,
+            "propertyNames": {
+              "pattern": "^[a-z@][a-zA-Z0-9]*$"
+            }
+          }
+        }
+      }
+    },
+    "edges": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": [
+          "from",
+          "to",
+          "labels"
+        ],
+        "additionalProperties": true,
+        "properties": {
+          "from": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "to": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "labels": {
+            "type": "array",
+            "minItems": 1,
+            "items": {
+              "type": "string",
+              "enum": [
+                "consist_of",
+                "input",
+                "output",
+                "intervene",
+                "request",
+                "is_accomplished",
+                "is_achieved",
+                "distribution",
+                "follows",
+                "undergo",
+                "fitted_on",
+                "trained_on",
+                "apply",
+                "fine_tuning",
+                "generates",
+                "report",
+                "perform",
+                "contain",
+                "include",
+                "link_to"
+              ]
+            }
+          }
+        }
+      }
+    }
+  },
+  "x-edge-relationship-rules": {
+    "consist_of": {
+      "from": [
+        "Analytical_Pattern"
+      ],
+      "to": [
+        "Operator"
+      ]
+    },
+    "input": {
+      "from": [
+        "Operator"
+      ],
+      "to": [
+        "sc:Dataset",
+        "cr:FileObject",
+        "Table",
+        "RelationalDatabase"
+      ]
+    },
+    "output": {
+      "from": [
+        "Operator"
+      ],
+      "to": [
+        "sc:Dataset",
+        "cr:FileObject",
+        "Table",
+        "RelationalDatabase"
+      ]
+    },
+    "intervene": {
+      "from": [
+        "User"
+      ],
+      "to": [
+        "Operator"
+      ]
+    },
+    "is_accomplished": {
+      "from": [
+        "Task"
+      ],
+      "to": [
+        "Analytical_Pattern"
+      ]
+    },
+    "is_achieved": {
+      "from": [
+        "Task"
+      ],
+      "to": [
+        "Analytical_Pattern"
+      ]
+    },
+    "request": {
+      "from": [
+        "User"
+      ],
+      "to": [
+        "Task"
+      ]
+    },
+    "distribution": {
+      "from": [
+        "sc:Dataset"
+      ],
+      "to": [
+        "cr:FileObject"
+      ]
+    },
+    "follows": {
+      "from": [
+        "Operator"
+      ],
+      "to": [
+        "Operator"
+      ]
+    },
+    "undergo": {
+      "from": [
+        "Analytical_Pattern"
+      ],
+      "to": [
+        "Evaluation"
+      ]
+    },
+    "fitted_on": {
+      "from": [
+        "sc:Dataset"
+      ],
+      "to": [
+        "Model_Inference"
+      ]
+    },
+    "trained_on": {
+      "from": [
+        "sc:Dataset"
+      ],
+      "to": [
+        "ML_Model"
+      ]
+    },
+    "apply": {
+      "from": [
+        "Model_Inference"
+      ],
+      "to": [
+        "ML_Model"
+      ]
+    },
+    "fine_tuning": {
+      "from": [
+        "ML_Model"
+      ],
+      "to": [
+        "Model_Training"
+      ]
+    },
+    "generates": {
+      "from": [
+        "Model_Training"
+      ],
+      "to": [
+        "ML_Model"
+      ]
+    },
+    "report": {
+      "from": [
+        "ML_Model"
+      ],
+      "to": [
+        "Model_Evaluation"
+      ]
+    },
+    "perform": {
+      "from": [
+        "Operator"
+      ],
+      "to": [
+        "Model_Inference"
+      ]
+    },
+    "contain": {
+      "from": [
+        "Group",
+        "Dataset",
+        "Structured_Data",
+        "Streaming_Data",
+        "Unstructured_Data",
+        "Relational_Database",
+        "Graph_Database"
+      ],
+      "to": [
+        "Dataset",
+        "Structured_Data",
+        "Streaming_Data",
+        "Unstructured_Data",
+        "Text_Set",
+        "Video_Set",
+        "Image_Set",
+        "Relational_Database",
+        "Graph_Database",
+        "CSV_Set",
+        "JSON_Set",
+        "XML_Set",
+        "Table",
+        "Graph",
+        "CSV",
+        "JSON",
+        "XML",
+        "Text",
+        "Video",
+        "Image",
+        "Column_Table",
+        "Column_CSV"
+      ]
+    },
+    "include": {
+      "from": [
+        "Dataset"
+      ],
+      "to": [
+        "Data"
+      ]
+    },
+    "link_to": {
+      "from": [
+        "Data"
+      ],
+      "to": [
+        "Data"
+      ]
+    }
+  }
+}

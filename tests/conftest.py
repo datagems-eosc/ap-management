@@ -1,3 +1,4 @@
+from pathlib import Path
 from typing import AsyncGenerator, Generator
 
 import pytest
@@ -32,10 +33,10 @@ async def task_repository(neo4j_container: Neo4jContainer) -> AsyncGenerator[Neo
 @pytest.fixture
 def ap_svc(ap_repository: Neo4jApRepository) -> AnalyticalPatternService:
     """
-    Offline ProvenanceService for testing purposes.
-    This one does not connect to a real database.
+    AnalyticalPatternService for testing purposes using local schema files.
     """
-    return AnalyticalPatternService(ap_repository)
+    schema_path = Path(__file__).parent.parent / "assets"
+    return AnalyticalPatternService(ap_repository, f"file://{schema_path}")
 
 
 @pytest_asyncio.fixture

@@ -33,14 +33,15 @@ test_cases = [
 ok_test_cases = list(filter(lambda tc: tc.valid, test_cases))
 
 
+@pytest.mark.asyncio
 @pytest.mark.parametrize("case", test_cases, ids=[tc.reason for tc in test_cases])
-def test_validate_ap(case: ApTestCase, ap_svc: AnalyticalPatternService):
+async def test_validate_ap(case: ApTestCase, ap_svc: AnalyticalPatternService):
     """
     Basic validation for an Ap
     """
     ap_plain = load_asset(case.asset_name)
     ap_pgjson = PgJson.model_validate_json(ap_plain)
-    errors = ap_svc.validate(ap_pgjson)
+    errors = await ap_svc.validate("base_validation_schema.json", ap_pgjson)
     is_valid = len(errors) == 0
     assert is_valid == case.valid
 
