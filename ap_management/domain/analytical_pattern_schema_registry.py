@@ -78,6 +78,105 @@ class ApSchemaRegistry:
                 f"Cannot connect to schema service at {full_uri}"
             ) from e
 
+    def _matches_operator_rule(self, node_labels: List[str], required_labels: List[str]) -> bool:
+        """
+        Check if a node matches the required labels with Operator wildcard support.
+        If rule requires "Operator", any node with "Operator" label or ending in "_Operator" is valid.
+        """
+        if "Operator" in required_labels:
+            if any(label == "Operator" or label.endswith("_Operator") for label in node_labels):
+                return True
+        return any(required_label in node_labels for required_label in required_labels)
+
+    def _validate_edge_relationships(self, candidate: AnalyticalPattern) -> List[ApSchemaError]:
+        """
+        Validate edge relationships according to x-edge-relationship-rules from the schema.
+        """
+        errors: List[ApSchemaError] = []
+
+        if not self.edge_relationship_rules:
+            return errors
+
+        graph = candidate.model_dump(by_alias=True)
+        nodes = graph.get("nodes", [])
+        edges = graph.get("edges", [])
+
+        # Create a map of node ID to labels
+        node_map = {node["id"]: node.get("labels", []) for node in nodes}
+
+        for edge_index, edge in enumerate(edges):
+            from_id = edge.get("from")
+            to_id = edge.get("to")
+            edge_labels = edge.get("labels", [])
+
+            from_node_labels = node_map.get(from_id)
+            to_node_labels = node_map.get(to_id)
+
+            # Check if nodes exist
+            if from_node_labels is None:
+                errors.append(ApSchemaError(
+                    keyword="edgeRelationship",
+                    instancePath=f"/edges/{edge_index}/from",
+                    schemaPath="#/x-edge-relationship-rules",
+                    params={"edgeIndex": edge_index, "nodeId": from_id},
+                    message=f"Edge 'from' node with ID '{from_id}' does not exist"
+                ))
+                continue
+
+            if to_node_labels is None:
+                errors.append(ApSchemaError(
+                    keyword="edgeRelationship",
+                    instancePath=f"/edges/{edge_index}/to",
+                    schemaPath="#/x-edge-relationship-rules",
+                    params={"edgeIndex": edge_index, "nodeId": to_id},
+                    message=f"Edge 'to' node with ID '{to_id}' does not exist"
+                ))
+                continue
+
+            # Validate each edge label
+            for edge_label in edge_labels:
+                rule = self.edge_relationship_rules.get(edge_label)
+
+                if not rule:
+                    continue
+
+                from_valid = self._matches_operator_rule(
+                    from_node_labels, rule["from_"])
+                to_valid = self._matches_operator_rule(
+                    to_node_labels, rule["to"])
+
+                if not from_valid or not to_valid:
+                    # Find allowed edge labels between these node types
+                    allowed_labels = [
+                        label for label, r in self.edge_relationship_rules.items()
+                        if self._matches_operator_rule(from_node_labels, r["from_"]) and
+                        self._matches_operator_rule(to_node_labels, r["to"])
+                    ]
+
+                    allowed_msg = (
+                        f"Allowed relationships between these nodes: {', '.join(allowed_labels)}"
+                        if allowed_labels
+                        else "No valid relationships allowed between these node types"
+                    )
+
+                    errors.append(ApSchemaError(
+                        keyword="edgeRelationship",
+                        instancePath=f"/edges/{edge_index}/labels",
+                        schemaPath=f"#/x-edge-relationship-rules/{edge_label}",
+                        params={
+                            "edgeIndex": edge_index,
+                            "edgeLabel": edge_label,
+                            "fromLabels": from_node_labels,
+                            "toLabels": to_node_labels,
+                            "expectedFrom": rule["from_"],
+                            "expectedTo": rule["to"]
+                        },
+                        message=f"Invalid relationship between node of type [{', '.join(from_node_labels)}] "
+                        f"and node of type [{', '.join(to_node_labels)}] with label '{edge_label}'. {allowed_msg}"
+                    ))
+
+        return errors
+
     async def validate(self, candidate: AnalyticalPattern, schema_uri: str) -> List[ApSchemaError]:
         """
         Validate a candidate Analytical Pattern against the schema located at schema_uri.
@@ -91,7 +190,14 @@ class ApSchemaRegistry:
         """
         schema = await self._ingest_schema(schema_uri)
         validator = Draft7Validator(schema, registry=self.registry)
-        return [self.wrap_to_ajv(e) for e in validator.iter_errors(candidate.model_dump(by_alias=True))]
+        errors = [self.wrap_to_ajv(e) for e in validator.iter_errors(
+            candidate.model_dump(by_alias=True))]
+
+        # Add edge relationship validation
+        edge_errors = self._validate_edge_relationships(candidate)
+        errors.extend(edge_errors)
+
+        return errors
 
     def wrap_to_ajv(self, err: ValidationError) -> ApSchemaError:
         """
