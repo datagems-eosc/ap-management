@@ -1,4 +1,5 @@
-from typing import Any, List
+from pathlib import Path
+from typing import Any, Callable, List
 from urllib.parse import urljoin
 
 from httpx import HTTPStatusError, RequestError, get
@@ -22,15 +23,27 @@ class ApSchemaRegistry:
 
     def __init__(self, base_url: str):
         self.base_url = base_url.rstrip("/")
-        self.registry = Registry(retrieve=self._fetch_resource)
         self.edge_relationship_rules: dict[str, dict] = {}
+
+        # Determine retrieval strategy based on base_url
+        retrieve_fn: Callable[[str], Resource[Any]]
+        if base_url.startswith("file://"):
+            retrieve_fn = self._fetch_resource_from_file
+        elif base_url.startswith(("http://", "https://")):
+            retrieve_fn = self._fetch_resource_from_http
+        else:
+            raise ValueError(
+                "Unsupported base URL scheme. Use 'file://' for local files or 'http(s)://' for HTTP resources."
+            )
+
+        self.registry = Registry(retrieve=retrieve_fn)
 
     async def _ingest_schema(self, uri: str):
         if uri.startswith("http://") or uri.startswith("https://"):
             raise ValueError(
                 "Full URLs are not supported. Provide a relative URI.")
 
-        schema = self._fetch_resource(uri).contents
+        schema = self.registry.get_or_retrieve(uri).value.contents
 
         rules = schema.get("x-edge-relationship-rules")
         if isinstance(rules, dict):
@@ -48,7 +61,34 @@ class ApSchemaRegistry:
         )
         return schema
 
-    def _fetch_resource(self, uri: str) -> Resource[Any]:
+    def _fetch_resource_from_file(self, uri: str) -> Resource[Any]:
+        """
+        Resolve a schema URI from local filesystem and return a referencing Resource.
+        Raises:
+            SchemaNotFoundError: If the schema file is not found.
+            SchemaUnavailableError: If the schema file cannot be read.
+        """
+        if self.base_url.startswith("file://"):
+            base_path = Path(self.base_url[7:])  # Remove file:// prefix
+        else:
+            base_path = Path(self.base_url)
+
+        file_path = base_path / uri.lstrip("/")
+
+        try:
+            import json
+            with open(file_path, "r") as f:
+                return Resource.from_contents(json.load(f))
+        except FileNotFoundError:
+            raise SchemaNotFoundError(
+                f"Schema file not found at {file_path}"
+            )
+        except (OSError, IOError) as e:
+            raise SchemaUnavailableError(
+                f"Cannot read schema file at {file_path}: {e}"
+            )
+
+    def _fetch_resource_from_http(self, uri: str) -> Resource[Any]:
         """
         Resolve a schema URI over HTTP(S) and return a referencing Resource.
         Raises:
