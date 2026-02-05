@@ -23,9 +23,6 @@ NEO4J_USER = getenv("NEO4J_USER", "")
 NEO4J_PASSWORD = getenv("NEO4J_PASSWORD", "")
 SCHEMA_REGISTRY_BASE_URL = getenv("SCHEMA_REGISTRY_BASE_URL", "")
 
-assert NEO4J_URI, "NEO4J_URI must be set"
-assert SCHEMA_REGISTRY_BASE_URL, "SCHEMA_REGISTRY_BASE_URL must be set"
-
 driver: AsyncDriver
 
 
