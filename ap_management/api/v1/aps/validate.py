@@ -19,7 +19,7 @@ class ValidationPayload(BaseModel):
     errors: List[Any]
 
 
-async def validate_ap(ap: PgJson, schema_path: str = "ap/ap-common.schema.json", svc: AnalyticalPatternService = Depends(get_ap_service)) -> ValidationPayload:
+async def validate_ap(ap: PgJson, schema_path: str = "aps/ap-common.schema.json", svc: AnalyticalPatternService = Depends(get_ap_service)) -> ValidationPayload:
     """
     Ensure the provided PG-JSON is a valid Analytical Pattern. Return the list of errors if validation fails.
     The input must first be a valid PG-JSON.
