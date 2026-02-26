@@ -13,6 +13,14 @@ Analytical Patterns are used to understand, document, and analyze complex data w
 
 ![ap](./images/ap-structure.png)
 
+## Key Features
+
+| Feature | Description |
+|---------|-------------|
+| CRUD | Create, retrieve, and list Analytical Patterns via REST |
+| Schema validation | Validate a PG-JSON graph against a JSON Schema before storing |
+| Semantic search | Search APs by natural language query using vector similarity (requires Neo4j 5.11+) |
+
 ## Quick Links
 
 - [API](openapi.md) - OpenAPI specification

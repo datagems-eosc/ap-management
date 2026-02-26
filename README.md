@@ -9,6 +9,12 @@ An **Analytical Pattern** (AP) is a graph-based representation of a sequence of 
 
 Analytical Patterns are used to understand, document, and analyze complex data workflows and data provenance.
 
+## Features
+
+- **CRUD** – Create, retrieve, and list Analytical Patterns stored in Neo4j.
+- **Semantic search** – Search APs by natural language query. Descriptions are embedded at creation time using a local [`sentence-transformers`](https://www.sbert.net/) model (`all-MiniLM-L6-v2`) and stored as Neo4j vector properties. At query time the same model embeds the query and Neo4j performs an approximate nearest-neighbour search, returning each match with a cosine-similarity score.
+  > **Neo4j requirement**: vector indexes require **Neo4j 5.11+** (Community or Enterprise).
+
 ## Quick Start
 
 ```bash
@@ -26,6 +32,8 @@ Configuration is managed through environment variables (see `.env` file):
 - `NEO4J_URI`: Neo4j connection URI
 - `NEO4J_USERNAME`: Neo4j username
 - `NEO4J_PASSWORD`: Neo4j password
+
+> **Note**: Semantic search requires Neo4j 5.11+. The embedding model (`all-MiniLM-L6-v2`) is downloaded automatically on first startup from Hugging Face and cached locally.
 
 ## Testing
 

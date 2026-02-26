@@ -17,6 +17,17 @@ The Analytical Pattern Management service uses environment variables for configu
 | `LOG_LEVEL` | Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) | `INFO` | No |
 | `APP_ENV` | Application environment (dev, prod) | `dev` | No |
 
+## Semantic Search
+
+The service embeds AP descriptions with a local [`sentence-transformers`](https://www.sbert.net/) model (`all-MiniLM-L6-v2`) and stores them as vector properties in Neo4j.
+
+**Requirements**:
+
+- **Neo4j 5.11+** – vector index support (`CREATE VECTOR INDEX`) is only available from this version onward.
+- The model is downloaded from Hugging Face on **first startup** and cached in the default `sentence-transformers` cache directory (`~/.cache/torch/sentence_transformers`). Subsequent restarts load the model from disk and incur no network traffic.
+
+> If the Neo4j instance is older than 5.11, the application will log an error during startup and the `/api/v1/aps/?q=...` search endpoint will return `500`.
+
 ### Example `.env` File
 
 ```bash
