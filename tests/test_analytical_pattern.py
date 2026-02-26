@@ -105,3 +105,20 @@ async def test_cycle_ap(case: ApTestCase, ap_svc: AnalyticalPatternService):
     #########################
     diff = origin_ap.difference(dest_ap)
     assert diff == {}, pretty_deepdiff(diff)
+
+
+@pytest.mark.asyncio
+async def test_search_ap(ap_svc: AnalyticalPatternService):
+    """
+    Store an AP, then search for it with a semantically related query.
+    """
+    ap_plain = load_asset("ap_sql_select_without_task")
+    ap = AnalyticalPattern.model_validate_json(ap_plain)
+    await ap_svc.create(ap)
+
+    results = await ap_svc.search("query a dataset", top_k=5)
+
+    assert len(results) > 0
+    top_ap, top_score = results[0]
+    assert top_ap is not None
+    assert 0.0 <= top_score <= 1.0

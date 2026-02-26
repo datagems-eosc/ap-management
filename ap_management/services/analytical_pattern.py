@@ -1,6 +1,6 @@
 
 from logging import getLogger
-from typing import Any, List
+from typing import Any, List, Optional
 
 from pydantic import ValidationError
 
@@ -8,6 +8,7 @@ from ap_management.domain import AnalyticalPattern, CrudError, PgJson
 from ap_management.domain.analytical_pattern_schema_registry import ApSchemaRegistry
 from ap_management.domain.exceptions import SchemaNotFoundError, SchemaUnavailableError
 from ap_management.repository import ApRepository, RepositoryError
+from ap_management.services.embeddings import Embedder
 
 logger = getLogger(__name__)
 
@@ -16,19 +17,33 @@ class AnalyticalPatternService:
 
     _repo: ApRepository
     _schema_registry_base_url: str
+    _embedder: Optional[Embedder]
 
-    def __init__(self, repo: ApRepository, schema_registry_base_url: str):
+    def __init__(self, repo: ApRepository, schema_registry_base_url: str, embedder: Optional[Embedder] = None):
         self._repo = repo
         self._schema_registry_base_url = schema_registry_base_url
+        self._embedder = embedder
 
     async def create(self, ap: AnalyticalPattern) -> str:
         """
         Create a new Analytical pattern by using its schema.
         Return the Analytical Pattern node id.
         """
-        try:
-            await self._repo.create(ap)
 
+        embedding: Optional[List[float]] = None
+        if self._embedder is not None:
+            description = (ap.root.properties or {}).get("description", "")
+            if description:
+                try:
+                    embedding = await self._embedder.embed(description)
+                except Exception as e:  # noqa: BLE001
+                    logger.warning(
+                        "Embedding generation failed – storing AP without vector.",
+                        exc_info=e,
+                    )
+
+        try:
+            await self._repo.create(ap, embedding)
             return ap.root.id
         except RepositoryError as e:
             raise CrudError(
@@ -47,6 +62,31 @@ class AnalyticalPatternService:
         except RepositoryError as e:
             raise CrudError(
                 "Could not retrieve analytical pattern"
+            ) from e
+
+    async def search(self, q: str, top_k: int = 10) -> List[tuple[AnalyticalPattern, float]]:
+        """
+        Search for Analytical Patterns whose description is semantically similar
+        to the given query string.
+
+        Raises ``CrudError`` if no embedder is configured.
+        Returns a list of up to ``top_k`` (AnalyticalPattern, score) tuples.
+        """
+        if self._embedder is None:
+            raise CrudError(
+                "Vector search is not available: no Embedder is configured."
+            )
+
+        try:
+            query_vector = await self._embedder.embed(q)
+        except Exception as e:  # noqa: BLE001
+            raise CrudError("Embedding generation failed") from e
+
+        try:
+            return await self._repo.search(query_vector, top_k=top_k)
+        except RepositoryError as e:
+            raise CrudError(
+                "Could not search analytical patterns"
             ) from e
 
     async def validate(self, schema_uri: str, candidate: PgJson) -> List[Any]:

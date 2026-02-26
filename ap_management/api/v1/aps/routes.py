@@ -3,6 +3,7 @@ from fastapi import APIRouter, status
 from .create import create_ap
 from .display import display_ap
 from .retrieve import retrieve_ap
+from .search import search_aps
 from .validate import validate_ap
 
 router = APIRouter(
@@ -15,6 +16,14 @@ router.add_api_route(
     "/", create_ap,
     methods=["POST"],
     status_code=status.HTTP_201_CREATED,
+    responses={
+        500: {"description": "Database error or unexpected server error"},
+    }
+)
+
+router.add_api_route(
+    "/", search_aps,
+    methods=["GET"],
     responses={
         500: {"description": "Database error or unexpected server error"},
     }

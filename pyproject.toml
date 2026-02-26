@@ -40,9 +40,24 @@ dev = [
     "commitizen>=4.11.3",
 ]
 
+local_embeddings = [
+    "sentence-transformers>=3.0.0",
+    "torch>=2.10.0"
+]
+
 [build-system]
 requires = ["hatchling"]
 build-backend = "hatchling.build"
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+torchvision = { index = "pytorch-cpu" }
+torchaudio = { index = "pytorch-cpu" }
 
 [tool.setuptools]
 py-modules = ["ap_management"]

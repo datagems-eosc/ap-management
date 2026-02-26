@@ -159,8 +159,9 @@ class Neo4jPgJsonMixin:
                     "id": n._properties["id"],
                     "labels": list(n.labels),
                     # NOTE: the "id" is its own property, it can be removed from there
+                    # NOTE: "description_embedding" is an internal vector field, not part of the domain model
                     "properties": {
-                        k: v for k, v in n._properties.items() if k != "id"
+                        k: v for k, v in n._properties.items() if k not in {"id", "description_embedding"}
                     },
                 }
             )

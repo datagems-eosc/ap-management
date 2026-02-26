@@ -8,6 +8,8 @@ from testcontainers.neo4j import Neo4jContainer
 
 from ap_management.repository import Neo4jApRepository, Neo4jTaskRepository
 from ap_management.services.analytical_pattern import AnalyticalPatternService
+from ap_management.services.embeddings.embedder import Embedder
+from ap_management.services.embeddings.local_embedder import LocalEmbedder
 from ap_management.services.task import TaskService
 
 
@@ -30,24 +32,32 @@ async def task_repository(neo4j_container: Neo4jContainer) -> AsyncGenerator[Neo
     await driver.close()
 
 
+@pytest.fixture(scope="session")
+def embedder() -> Embedder:
+    """Embedder for testing purposes."""
+    return LocalEmbedder()
+
+
 @pytest.fixture
-def ap_svc(ap_repository: Neo4jApRepository) -> AnalyticalPatternService:
+def ap_svc(ap_repository: Neo4jApRepository, embedder: Embedder) -> AnalyticalPatternService:
     """
     AnalyticalPatternService for testing purposes using local schema files.
     """
     schema_path = Path(__file__).parent.parent / "assets"
-    return AnalyticalPatternService(ap_repository, f"file://{schema_path}")
+    return AnalyticalPatternService(ap_repository, f"file://{schema_path}", embedder=embedder)
 
 
 @pytest_asyncio.fixture
-async def ap_repository(neo4j_container: Neo4jContainer) -> AsyncGenerator[Neo4jApRepository]:
+async def ap_repository(neo4j_container: Neo4jContainer, embedder: Embedder) -> AsyncGenerator[Neo4jApRepository]:
     """Provide an AsyncRepository using AsyncSession."""
     uri = neo4j_container.get_connection_url()
     auth = (neo4j_container.username, neo4j_container.password)
     driver = AsyncGraphDatabase.driver(uri, auth=auth)
 
     async with driver.session() as session:
-        yield Neo4jApRepository(session)
+        repo = Neo4jApRepository(session)
+        await repo.enable_embeddings(embedder.dimensions)
+        yield repo
 
     await driver.close()
 
