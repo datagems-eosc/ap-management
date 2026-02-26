@@ -30,6 +30,11 @@ CMD [ "uv", "run", "pytest" ]
 # Actual production image
 FROM builder AS prod
 
-RUN uv sync --frozen
+ARG LOCAL_EMBEDDINGS=true
+RUN if [ "$LOCAL_EMBEDDINGS" = "true" ]; then \
+        uv sync --frozen --group local_embeddings; \
+    else \
+        uv sync --frozen; \
+    fi
 
 CMD [ "uv", "run", "python", "ap_management/main.py" ]
