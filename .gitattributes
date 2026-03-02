@@ -1,0 +1,1 @@
+assets/mathe/** filter=lfs diff=lfs merge=lfs -text
