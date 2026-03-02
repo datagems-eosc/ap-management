@@ -2,6 +2,7 @@ from fastapi import APIRouter, status
 
 from .create import create_ap
 from .display import display_ap
+from .resolve import resolve_ap
 from .retrieve import retrieve_ap
 from .search import search_aps
 from .validate import validate_ap
@@ -11,6 +12,17 @@ router = APIRouter(
     tags=["aps"],
 )
 
+
+router.add_api_route(
+    "/resolve",
+    resolve_ap,
+    methods=["POST"],
+    responses={
+        200: {"description": "Existing Analytical Pattern found"},
+        201: {"description": "New Analytical Pattern created"},
+        500: {"description": "Database error or unexpected server error"},
+    }
+)
 
 router.add_api_route(
     "/", create_ap,

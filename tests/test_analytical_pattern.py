@@ -122,3 +122,21 @@ async def test_search_ap(ap_svc: AnalyticalPatternService):
     top_ap, top_score = results[0]
     assert top_ap is not None
     assert 0.0 <= top_score <= 1.0
+
+
+@pytest.mark.asyncio
+async def test_resolve_ap(ap_svc: AnalyticalPatternService):
+    """
+    Test that a simple query generates a valid Analytical Pattern.
+    """
+    query = "Discrete Mathematics Recursivity level 2"
+    ap, score, created = await ap_svc.resolve(query)
+    assert isinstance(ap, AnalyticalPattern)
+    assert score is not None
+    assert created is True
+
+    # Second call with the same query should find the existing AP
+    ap2, score2, created2 = await ap_svc.resolve(query)
+    assert ap2.root.id == ap.root.id
+    assert score2 is not None
+    assert created2 is False

@@ -8,6 +8,9 @@ from testcontainers.neo4j import Neo4jContainer
 
 from ap_management.repository import Neo4jApRepository, Neo4jTaskRepository
 from ap_management.services.analytical_pattern import AnalyticalPatternService
+from ap_management.services.analytical_pattern_generator import (
+    AnalyticalPatternGenerator,
+)
 from ap_management.services.embeddings.embedder import Embedder
 from ap_management.services.embeddings.local_embedder import LocalEmbedder
 from ap_management.services.task import TaskService
@@ -43,8 +46,9 @@ def ap_svc(ap_repository: Neo4jApRepository, embedder: Embedder) -> AnalyticalPa
     """
     AnalyticalPatternService for testing purposes using local schema files.
     """
+    ap_generator = AnalyticalPatternGenerator()
     schema_path = Path(__file__).parent.parent / "assets"
-    return AnalyticalPatternService(ap_repository, f"file://{schema_path}", embedder=embedder)
+    return AnalyticalPatternService(ap_repository, f"file://{schema_path}", embedder=embedder, generator=ap_generator)
 
 
 @pytest_asyncio.fixture

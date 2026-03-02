@@ -23,6 +23,7 @@ dependencies = [
     "neo4j>=6.0.3",
     "pydantic>=2.12.5",
     "referencing>=0.37.0",
+    "table-reclamation-demo",
 ]
 
 [dependency-groups]
@@ -58,6 +59,7 @@ explicit = true
 torch = { index = "pytorch-cpu" }
 torchvision = { index = "pytorch-cpu" }
 torchaudio = { index = "pytorch-cpu" }
+table-reclamation-demo = { git = "https://github.com/SoTrx/Table-Reclamation-Demo.git", rev = "v0.2.2" }
 
 [tool.setuptools]
 py-modules = ["ap_management"]

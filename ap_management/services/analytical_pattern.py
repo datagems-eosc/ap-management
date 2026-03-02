@@ -1,13 +1,18 @@
 
+from concurrent.futures import wait
 from logging import getLogger
 from typing import Any, List, Optional
 
 from pydantic import ValidationError
+from table_reclamation import AccessPlanner
 
 from ap_management.domain import AnalyticalPattern, CrudError, PgJson
 from ap_management.domain.analytical_pattern_schema_registry import ApSchemaRegistry
 from ap_management.domain.exceptions import SchemaNotFoundError, SchemaUnavailableError
 from ap_management.repository import ApRepository, RepositoryError
+from ap_management.services.analytical_pattern_generator import (
+    AnalyticalPatternGenerator,
+)
 from ap_management.services.embeddings import Embedder
 
 logger = getLogger(__name__)
@@ -19,9 +24,16 @@ class AnalyticalPatternService:
     _schema_registry_base_url: str
     _embedder: Optional[Embedder]
 
-    def __init__(self, repo: ApRepository, schema_registry_base_url: str, embedder: Optional[Embedder] = None):
+    def __init__(
+            self,
+            repo: ApRepository,
+            schema_registry_base_url: str,
+            generator: AnalyticalPatternGenerator,
+            embedder: Optional[Embedder] = None
+    ):
         self._repo = repo
         self._schema_registry_base_url = schema_registry_base_url
+        self._generator = generator
         self._embedder = embedder
 
     async def create(self, ap: AnalyticalPattern) -> str:
@@ -88,6 +100,33 @@ class AnalyticalPatternService:
             raise CrudError(
                 "Could not search analytical patterns"
             ) from e
+
+    async def resolve(
+        self, query: str, threshold: float = 0.85, top_k: int = 5
+    ) -> tuple[AnalyticalPattern, float | None, bool]:
+        """
+        Find an existing AP semantically close to ``query`` (score >= threshold),
+        or generate and persist a new one.
+
+        Returns a ``(ap, score, created)`` tuple where ``created`` is True when
+        a new AP was generated.
+        """
+        # Search for existing APs matching the query.
+        aps = await self.search(query, top_k=top_k)
+        for ap, score in aps:
+            if score >= threshold:
+                return ap, score, False
+
+        try:
+            new_ap = self._generator.generate(query)
+            await self.create(new_ap)
+            return new_ap, 1.0, True
+        except ValueError as e:
+            raise CrudError(
+                "No Analytical Pattern generated can be generated for query. Is this query valid ?") from e
+        except RepositoryError as e:
+            raise CrudError(
+                "Failed to persist generated Analytical Pattern") from e
 
     async def validate(self, schema_uri: str, candidate: PgJson) -> List[Any]:
         """

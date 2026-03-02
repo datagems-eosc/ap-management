@@ -13,6 +13,9 @@ from ap_management.repository import (
     TaskRepository,
 )
 from ap_management.services.analytical_pattern import AnalyticalPatternService
+from ap_management.services.analytical_pattern_generator import (
+    AnalyticalPatternGenerator,
+)
 from ap_management.services.embeddings import Embedder
 from ap_management.services.embeddings.local_embedder import LocalEmbedder
 from ap_management.services.task import TaskService
@@ -71,7 +74,8 @@ async def get_ap_repo(session: AsyncSession = Depends(get_db_conn), embedder: Em
 
 
 def get_ap_service(repo: ApRepository = Depends(get_ap_repo), embedder: Embedder = Depends(get_embedder)) -> AnalyticalPatternService:
-    return AnalyticalPatternService(repo, SCHEMA_REGISTRY_BASE_URL, embedder=embedder)
+    generator = AnalyticalPatternGenerator()
+    return AnalyticalPatternService(repo, SCHEMA_REGISTRY_BASE_URL, generator, embedder=embedder)
 
 
 async def get_task_repo(session: AsyncSession = Depends(get_db_conn)) -> TaskRepository:
