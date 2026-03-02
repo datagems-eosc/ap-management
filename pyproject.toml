@@ -1,6 +1,6 @@
 [project]
 name = "ap-management"
-version = "0.1.2"
+version = "0.4.0"
 description = "AP Management repository"
 authors = [{ name = "Lucas Peirone", email = "lucas.peirone@univ-grenoble-alpes.fr" }]
 readme = "README.md"
