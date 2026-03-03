@@ -27,14 +27,16 @@ class AnalyticalPatternGenerator:
         if not plan or len(plan) == 0:
             raise ValueError("No SQL plan generated for the given query.")
 
-        return self._convert_to_ap(query, plan)
+        db_name = mathe_dir.name
+        return self._convert_to_ap(query, plan, db_name)
 
-    def _convert_to_ap(self, query: str, plan: List[SqlOperation]) -> AnalyticalPattern | None:
+    def _convert_to_ap(self, query: str, plan: List[SqlOperation], db_name: str = "unknown") -> AnalyticalPattern | None:
         """
         Convert a SQL plan into an Analytical Pattern object.
         Arguments:
             query: The original natural language query.
             plan: A list of SqlOperation objects representing the SQL plan.
+            db_name: The name of the source relational database.
         Returns:
             An AnalyticalPattern object representing the generated pattern.
         """
@@ -57,12 +59,22 @@ class AnalyticalPatternGenerator:
             },
         })
 
+        # Relational_Database node (shared across all operators)
+        db_id = str(uuid4())
+        nodes.append({
+            "id": db_id,
+            "labels": ["Relational_Database"],
+            "properties": {
+                "name": db_name,
+            },
+        })
+
+        table_ids: dict[str, str] = {}  # qualified table name -> node id
         operator_ids: List[str] = []
         for step, operation in enumerate(plan, start=1):
             logger.info(f"Generated operation: {operation}")
 
             operator_id = str(uuid4())
-            input_id = str(uuid4())
             output_id = str(uuid4())
 
             # SQL Operator node
@@ -75,15 +87,6 @@ class AnalyticalPatternGenerator:
                     "query": operation.sql,
                     "step": step,
                     "type": "SQL Query",
-                },
-            })
-
-            # Input dataset node (the source table)
-            nodes.append({
-                "id": input_id,
-                "labels": ["cr:FileObject", "RelationalDatabase"],
-                "properties": {
-                    "name": operation.table,
                 },
             })
 
@@ -100,11 +103,11 @@ class AnalyticalPatternGenerator:
                 "to": operator_id,
             })
 
-            # Operator --input--> InputDataset
+            # Operator --input--> Relational_Database
             edges.append({
                 "from": operator_id,
                 "labels": ["input"],
-                "to": input_id,
+                "to": db_id,
             })
 
             # Operator --output--> OutputDataset
@@ -113,6 +116,24 @@ class AnalyticalPatternGenerator:
                 "labels": ["output"],
                 "to": output_id,
             })
+
+            # Table node (deduplicated) + Relational_Database --contain--> Table
+            qualified_name = f"{db_name}.{operation.table}"
+            if qualified_name not in table_ids:
+                table_id = str(uuid4())
+                table_ids[qualified_name] = table_id
+                nodes.append({
+                    "id": table_id,
+                    "labels": ["Table"],
+                    "properties": {
+                        "name": qualified_name,
+                    },
+                })
+                edges.append({
+                    "from": db_id,
+                    "labels": ["contain"],
+                    "to": table_id,
+                })
 
             # Previous operator --follows--> current operator
             if step > 1:
