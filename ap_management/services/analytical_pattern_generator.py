@@ -1,4 +1,5 @@
 import logging
+import re
 from pathlib import Path
 from typing import List
 from uuid import uuid4
@@ -77,6 +78,13 @@ class AnalyticalPatternGenerator:
             operator_id = str(uuid4())
             output_id = str(uuid4())
 
+            # Qualify table name in SQL with db schema prefix
+            qualified_sql = re.sub(
+                rf"\b{re.escape(operation.table)}\b",
+                f"{db_name}.{operation.table}",
+                operation.sql,
+            )
+
             # SQL Operator node
             nodes.append({
                 "id": operator_id,
@@ -84,7 +92,7 @@ class AnalyticalPatternGenerator:
                 "properties": {
                     "command": "query",
                     "queryType": "SELECT",
-                    "query": operation.sql,
+                    "query": qualified_sql,
                     "step": step,
                     "type": "SQL Query",
                 },
