@@ -49,7 +49,7 @@ wheels = [
 
 [[package]]
 name = "ap-management"
-version = "0.1.2"
+version = "0.4.0"
 source = { editable = "." }
 dependencies = [
     { name = "deepdiff" },
@@ -95,7 +95,7 @@ requires-dist = [
     { name = "neo4j", specifier = ">=6.0.3" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "referencing", specifier = ">=0.37.0" },
-    { name = "table-reclamation-demo", git = "https://github.com/SoTrx/Table-Reclamation-Demo.git?rev=v0.2.2" },
+    { name = "table-reclamation-demo", git = "https://github.com/SoTrx/Table-Reclamation-Demo.git?rev=v0.3.0" },
 ]
 
 [package.metadata.requires-dev]
@@ -2172,8 +2172,8 @@ wheels = [
 
 [[package]]
 name = "table-reclamation-demo"
-version = "0.2.2"
-source = { git = "https://github.com/SoTrx/Table-Reclamation-Demo.git?rev=v0.2.2#6452dafe9f9a10dbdc6e1ca52aa986772aa6aed8" }
+version = "0.3.0"
+source = { git = "https://github.com/SoTrx/Table-Reclamation-Demo.git?rev=v0.3.0#e45d8c5618b31ee9afdb3638063cfdee46776b39" }
 dependencies = [
     { name = "duckdb" },
     { name = "pandas" },

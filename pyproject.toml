@@ -59,7 +59,7 @@ explicit = true
 torch = { index = "pytorch-cpu" }
 torchvision = { index = "pytorch-cpu" }
 torchaudio = { index = "pytorch-cpu" }
-table-reclamation-demo = { git = "https://github.com/SoTrx/Table-Reclamation-Demo.git", rev = "v0.2.2" }
+table-reclamation-demo = { git = "https://github.com/SoTrx/Table-Reclamation-Demo.git", rev = "v0.3.0" }
 
 [tool.setuptools]
 py-modules = ["ap_management"]
