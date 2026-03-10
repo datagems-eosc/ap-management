@@ -1,6 +1,6 @@
 [project]
 name = "ap-management"
-version = "0.4.0"
+version = "0.4.5"
 description = "AP Management repository"
 authors = [{ name = "Lucas Peirone", email = "lucas.peirone@univ-grenoble-alpes.fr" }]
 readme = "README.md"
@@ -59,7 +59,7 @@ explicit = true
 torch = { index = "pytorch-cpu" }
 torchvision = { index = "pytorch-cpu" }
 torchaudio = { index = "pytorch-cpu" }
-table-reclamation-demo = { git = "https://github.com/SoTrx/Table-Reclamation-Demo.git", rev = "v0.3.0" }
+table-reclamation-demo = { git = "https://github.com/SoTrx/Table-Reclamation-Demo.git", rev = "v0.3.1" }
 
 [tool.setuptools]
 py-modules = ["ap_management"]

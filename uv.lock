@@ -95,7 +95,7 @@ requires-dist = [
     { name = "neo4j", specifier = ">=6.0.3" },
     { name = "pydantic", specifier = ">=2.12.5" },
     { name = "referencing", specifier = ">=0.37.0" },
-    { name = "table-reclamation-demo", git = "https://github.com/SoTrx/Table-Reclamation-Demo.git?rev=v0.3.0" },
+    { name = "table-reclamation-demo", git = "https://github.com/SoTrx/Table-Reclamation-Demo.git?rev=v0.3.1" },
 ]
 
 [package.metadata.requires-dev]
@@ -2172,8 +2172,8 @@ wheels = [
 
 [[package]]
 name = "table-reclamation-demo"
-version = "0.3.0"
-source = { git = "https://github.com/SoTrx/Table-Reclamation-Demo.git?rev=v0.3.0#e45d8c5618b31ee9afdb3638063cfdee46776b39" }
+version = "0.3.1"
+source = { git = "https://github.com/SoTrx/Table-Reclamation-Demo.git?rev=v0.3.1#8195594c5883cdd774d1478e52fe9c78e14bd656" }
 dependencies = [
     { name = "duckdb" },
     { name = "pandas" },
