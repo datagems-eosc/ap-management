@@ -16,7 +16,6 @@ classifiers = [
 dependencies = [
     "deepdiff>=9.1.0",
     "fastapi>=0.136.3",
-    "headroom-ai[agno,anyllm,code,ml]>=0.5.2",
     "litellm>=1.87.0",
     "microsoft-kiota-http>=1.10.2",
     "microsoft-kiota-serialization-form>=1.10.2",
