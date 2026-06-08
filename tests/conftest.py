@@ -27,6 +27,8 @@ ASSETS_PATH = PROJECT_ROOT / "assets"
 
 load_dotenv(PROJECT_ROOT / ".env")
 
+# MOMA_PORT = 5000
+
 
 @pytest.fixture(scope="session")
 def assets_path() -> Path:
@@ -50,17 +52,18 @@ def case(request) -> ApTestCase:
 
 
 @pytest.fixture
-def no_ai_composer(moma_client: MomaManagementClient) -> Composer:
-    return Composer(strategies=[SimpleComposition()], moma_svc=moma_client)
-
-
-# MOMA_IMAGE = f"ghcr.io/datagems-eosc/datagems-eosc/moma-management:{os.environ['MOMA_VERSION']}"
-# MOMA_PORT = 5000
+def no_ai_composer() -> Composer:
+    return Composer(strategies=[SimpleComposition()], moma_svc=None)
 
 
 # @pytest.fixture(scope="session")
 # def moma_client() -> Generator[MomaManagementClient, None, None]:
-#     with DockerContainer(MOMA_IMAGE).with_exposed_ports(MOMA_PORT) as container:
+#     moma_version = os.environ.get("MOMA_VERSION")
+#     if not moma_version:
+#         pytest.skip("MOMA_VERSION is not set, skipping integration tests.")
+#     moma_image = f"ghcr.io/datagems-eosc/datagems-eosc/moma-management:{moma_version}"
+#     with DockerContainer(moma_image).with_exposed_ports(MOMA_PORT) as container:
+#         wait_for_logs(container, "Application startup complete")
 #         host = container.get_container_host_ip()
 #         port = container.get_exposed_port(MOMA_PORT)
 #         adapter = HttpxRequestAdapter(AnonymousAuthenticationProvider())
