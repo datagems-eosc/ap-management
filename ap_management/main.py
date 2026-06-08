@@ -9,7 +9,6 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from ap_management.api.v1.routes import router
-from ap_management.di import container_lifespan
 
 load_dotenv()
 
@@ -27,7 +26,6 @@ ROOT_PATH = getenv("ROOT_PATH", "")
 app = FastAPI(
     title="Analytical Pattern Management API",
     description="API to manage AP",
-    lifespan=container_lifespan,
     version=project_version,
     root_path=ROOT_PATH,
 )

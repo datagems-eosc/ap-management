@@ -1,68 +1,89 @@
 # Configuration
 
-This document describes how to configure the Analytical Pattern Management service for different environments.
+This document describes how to configure the Analytical Pattern Management service.
 
 ## Environment Variables
 
-The Analytical Pattern Management service uses environment variables for configuration. A `.env` file can be used to define these variables:
+The service is configured via environment variables. A `.env` file can be used to define them (see `.env.example`):
 
 | Variable | Description | Default | Required |
 |----------|-------------|---------|----------|
-| `NEO4J_URI` | Neo4j database connection URI | `neo4j://localhost:7687` | Yes |
-| `NEO4J_USERNAME` | Neo4j database username | `neo4j` | Yes |
-| `NEO4J_PASSWORD` | Neo4j database password | - | Yes |
-| `SCHEMA_REGISTRY_BASE_URL` | Base URL for remote schema validation service | `http://172.17.0.1:8085` | No |
-| `CORS_ORIGINS` | Comma-separated list of allowed CORS origins | - | No |
-| `ROOT_PATH` | API root path for reverse proxy deployments | - | No |
-| `LOG_LEVEL` | Logging level (DEBUG, INFO, WARNING, ERROR, CRITICAL) | `INFO` | No |
-| `APP_ENV` | Application environment (dev, prod) | `dev` | No |
+| `MOMA_MANAGEMENT_BASE_URL` | Base URL of the MoMa Management service used for AP validation | `http://moma-management:5000` | No |
+| `LLM_API_BASE` | Base URL of an OpenAI-compatible LLM API | – | Yes (agentic strategy) |
+| `LLM_API_MODEL` | Model identifier passed to LiteLLM (e.g. `openai/gpt-4o`) | – | Yes (agentic strategy) |
+| `LLM_API_KEY` | API key for the LLM provider | – | No |
+| `LLM_SSL_VERIFY` | Verify TLS certificates when calling the LLM (`true`/`false`) | `true` | No |
+| `CORS_ORIGINS` | Comma-separated list of allowed CORS origins | – | No |
+| `ROOT_PATH` | API root path for reverse-proxy deployments | – | No |
+| `MOMA_VERSION` | MoMa Management Docker image version (used by docker-compose and tests) | – | No |
 
-## Semantic Search
+> The `LLM_*` variables are only required when the **agentic composition strategy** is needed (i.e. when AP outputs and inputs don't match by type). The `SimpleComposition` strategy works without any LLM.
 
-The service embeds AP descriptions with a local [`sentence-transformers`](https://www.sbert.net/) model (`all-MiniLM-L6-v2`) and stores them as vector properties in Neo4j.
+## Composition Strategies
 
-**Requirements**:
+### SimpleComposition (no LLM)
 
-- **Neo4j 5.11+** – vector index support (`CREATE VECTOR INDEX`) is only available from this version onward.
-- The model is downloaded from Hugging Face on **first startup** and cached in the default `sentence-transformers` cache directory (`~/.cache/torch/sentence_transformers`). Subsequent restarts load the model from disk and incur no network traffic.
+Requires no additional configuration. Activates automatically when AP1's last operator outputs and AP2's first operator inputs have the same number of parameters and matching scalar types.
 
-> If the Neo4j instance is older than 5.11, the application will log an error during startup and the `/api/v1/aps/?q=...` search endpoint will return `500`.
+### AgenticComposition (LLM required)
 
-### Example `.env` File
+Used as a fallback when `SimpleComposition` is not applicable. Requires an OpenAI-compatible LLM endpoint:
 
 ```bash
-# Neo4j Configuration
-NEO4J_URI=neo4j://localhost:7687
-NEO4J_USERNAME=neo4j
-NEO4J_PASSWORD=your_secure_password
-
-# Schema Validation
-SCHEMA_REGISTRY_BASE_URL=http://schema-service:8085
-
-# CORS (optional - comma-separated origins)
-CORS_ORIGINS=http://localhost:5173,https://your-frontend.com
-
-# Logging
-LOG_LEVEL=INFO
-
-# Application Environment
-APP_ENV=dev
+LLM_API_BASE=https://api.openai.com/v1
+LLM_API_MODEL=openai/gpt-4o-mini
+LLM_API_KEY=sk-...
 ```
+
+Any LiteLLM-supported provider works. For a local model (e.g. Ollama):
+
+```bash
+LLM_API_BASE=http://localhost:11434
+LLM_API_MODEL=ollama/llama3
+LLM_SSL_VERIFY=false
+```
+
+## Example `.env` File
+
+```bash
+# MoMa Management service
+MOMA_MANAGEMENT_BASE_URL=http://moma-management:5000
+MOMA_VERSION=v2.6.0
+
+# LLM (required for agentic composition)
+LLM_API_BASE=https://api.openai.com/v1
+LLM_API_MODEL=openai/gpt-4o-mini
+LLM_API_KEY=sk-...
+
+# CORS (optional — comma-separated origins)
+CORS_ORIGINS=http://localhost:5173,https://your-frontend.com
+```
+
+## Docker Compose
+
+The `docker-compose.yml` file starts the full stack (ap-management + moma-management + neo4j):
+
+```bash
+cp .env.example .env
+# Set MOMA_VERSION and any LLM variables in .env
+docker compose up
+```
+
+The `ap-management` service is exposed on port `5000` by default.
 
 ## API Documentation
 
-Once configured and running, access the interactive API documentation:
+Once running, access the interactive API documentation:
 
 - **Swagger UI**: http://localhost:5000/docs
 - **ReDoc**: http://localhost:5000/redoc
 - **OpenAPI JSON**: http://localhost:5000/openapi.json
 
-## Testing Configuration
+## Testing
 
-Tests automatically use testcontainers to spin up a Neo4j instance. No manual configuration needed for running tests:
+Tests spin up a containerised MoMa Management instance automatically via [testcontainers](https://testcontainers.com/). `MOMA_VERSION` must be set in `.env`:
 
 ```bash
+uv sync --all-groups
 pytest tests/
 ```
-
-The test configuration is defined in `tests/conftest.py`.

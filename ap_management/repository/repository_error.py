@@ -1,3 +1,0 @@
-class RepositoryError(Exception):
-    """Custom exception for repository errors."""
-    ...

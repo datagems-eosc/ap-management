@@ -1,101 +1,132 @@
 # Service Architecture
 
-The Analytical Pattern Management service is a RESTful API service designed to manage Analytical Patterns (AP) stored in Neo4j. This document outlines the key components and their interactions.
+The Analytical Pattern Management service is a RESTful API that **composes** two Analytical Patterns (APs) into a single AP. This document describes the key components and their interactions.
 
 ## High-Level Architecture
 
-The Analytical Pattern Management service follows a layered architecture:
-
 ```
+  HTTP client
+      │
+      │  POST /analytical-patterns/compose
+      │  { ap1: {...}, ap2: {...} }
+      ▼
 ┌─────────────────────────────────────────┐
 │       FastAPI REST API Layer            │
+│  ap_management/api/v1/                  │
+└─────────────────┬───────────────────────┘
+                  │
+┌─────────────────▼───────────────────────┐
+│        Composer Service                 │
+│  ap_management/services/composer/       │
 │                                         │
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│      Business Logic (Services) Layer    │
-|                                         |
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│    Data Access / Repository Layer       │
-|      (Maps business object to their     |
-      physical representation on storage) |
-└─────────────────┬───────────────────────┘
-                  │
-┌─────────────────▼───────────────────────┐
-│         Neo4j Database                  │
-└─────────────────────────────────────────┘
+│  1. Select a composition strategy       │
+│  2. Generate output→input mapping       │
+│  3. Stitch the two graphs together      │
+│  4. Validate via MoMa Management        │
+└──────┬──────────────────────┬───────────┘
+       │                      │
+┌──────▼──────┐    ┌──────────▼──────────┐
+│   Simple    │    │  Agentic            │
+│  Strategy   │    │  Strategy           │
+│             │    │  (LiteLLM → LLM)    │
+└─────────────┘    └─────────────────────┘
+                              │
+              ┌───────────────▼──────────────┐
+              │     MoMa Management API      │
+              │  (AP storage & validation)   │
+              └──────────────────────────────┘
 ```
 
-### Data Models
+## Data Models
 
-#### Analytical Pattern Structure
+### Analytical Pattern Structure
 
 An Analytical Pattern is represented in [**PG-JSON**](https://pg-format.github.io/) format:
 
-```
+```json
 {
   "nodes": [
     {
       "id": "unique-id",
       "labels": ["Label1", "Label2"],
-      "properties": { ... }
-    },
-    ...
+      "properties": { "inputs": [...], "outputs": [...] }
+    }
   ],
   "edges": [
     {
-      "from_": "source-id",
+      "from": "source-id",
       "to": "target-id",
       "labels": ["RelationType"],
-      "properties": { ... }
-    },
-    ...
+      "properties": {}
+    }
   ]
 }
 ```
 
-**Additional Requirements for a PG-JSON graph to be an Analytical Pattern**:
+**Requirements for a valid AP:**
 - Exactly one root node with label `Analytical_Pattern`
 - All nodes reachable from root
+- Each `Operator` node has `inputs` and `outputs` properties (arrays of `{ name, type }` objects)
 
-## Semantic Search
+## Composition Pipeline
 
-The service supports natural language search over Analytical Patterns using vector similarity.
+### Step 1 — Strategy Selection
 
-### How it works
+The `Composer` iterates over registered strategies in order and selects the first one whose `is_possible()` check passes:
+
+| Strategy | Condition |
+|----------|-----------|
+| `SimpleComposition` | AP1's last operator outputs and AP2's first operator inputs have the same length **and** matching types in order |
+| `AgenticComposition` | Always attempted as a fallback; uses an LLM to decide compatibility |
+
+### Step 2 — Mapping Generation
+
+A **Mapping** pairs an output parameter of AP1's last operator with an input parameter of AP2's first operator:
 
 ```
-  AP creation                         Search query
-       │                                   │
-       ▼                                   ▼
- LocalEmbedder                       LocalEmbedder
- (all-MiniLM-L6-v2)                 (all-MiniLM-L6-v2)
-       │                                   │
-       │  description vector               │  query vector
-       ▼                                   ▼
-  Neo4j node property          db.index.vector.queryNodes
-  description_embedding        (ANN search, cosine similarity)
-       │                                   │
-       └──────── vector index ─────────────┘
-                     │
-                     ▼
-          List[{ ap, score }]
+Mapping {
+  source:      { node_id, name, path, type }   ← AP1 last operator output
+  destination: { node_id, name, path, type }   ← AP2 first operator input
+  confidence:  float (0–1)
+  reason:      str
+}
 ```
 
-1. **At creation time** – the `description` property of the root `Analytical_Pattern` node is embedded using `SentenceTransformer("all-MiniLM-L6-v2")` and stored on the node as `description_embedding`.
-2. **At search time** – the query string is embedded with the same model and passed to `db.index.vector.queryNodes`, which performs an approximate nearest-neighbour search using the `ap_description_embedding` vector index.
-3. **Response** – each result contains the full AP object and a `score` (cosine similarity, 0–1).
+- `SimpleComposition` generates mappings by zipping outputs and inputs in order (confidence = 1.0).
+- `AgenticComposition` sends the operator schemas to the LLM and parses a structured `ComposeReport` response.
 
-> The `description_embedding` property is intentionally excluded from all API responses; only the `score` is surfaced.
+### Step 3 — Stitching
 
+For each mapping the `Composer._stitch()` method:
 
-## Key Design Patterns
+1. Creates a `ResultType` node bridging the AP1 output to the AP2 input, with `output` and `input` edges carrying `mapping` properties that describe the data transformation path.
+2. Copies all non-`Analytical_Pattern` nodes and edges from AP2 into AP1.
+3. Re-assigns all `consist_of` edges to point to AP1's (new) root `Analytical_Pattern` node.
+4. Adds a `follows` edge from AP2's first operator to AP1's last operator.
 
-### Dependency Injection
+### Step 4 — Validation
 
-The service uses a DI container (defined in `di.py`) to manage dependencies:
-- Service instances are created with their repositories
-- Repositories are created with database connections
-- Enables easier testing and component isolation
+The composed AP is sent to the **MoMa Management** service (`/api/v1/aps/validate`) for schema validation. A failed validation raises a `CompositionInternalError` (HTTP 500).
+
+## Composition Strategies
+
+### SimpleComposition
+
+Applies when the number of outputs of AP1's last operator equals the number of inputs of AP2's first operator, and every pair has the same scalar type. No external dependencies.
+
+### AgenticComposition
+
+Always applicable as a fallback. Sends the operator schemas to an LLM via [LiteLLM](https://docs.litellm.ai/) and expects a structured JSON response:
+
+- Compatible: returns a list of `Mapping` objects with source/destination paths.
+- Incompatible: returns `{ compatible: false, reason: "..." }`, which causes a `CompositionInputError` (HTTP 422).
+
+The LLM endpoint is configured via `LLM_API_BASE` / `LLM_API_MODEL` environment variables (any OpenAI-compatible API is supported).
+
+## Dependency Injection
+
+Dependencies are wired in `ap_management/di.py` using FastAPI's `Depends` mechanism:
+
+- `get_llm()` — builds an `LLM` instance from `LLM_API_*` env vars.
+- `get_moma_svc()` — builds a Kiota-generated `MomaManagementClient` pointed at `MOMA_MANAGEMENT_BASE_URL`.
+- `get_composer()` — assembles a `Composer` with both strategies and the MoMa client.

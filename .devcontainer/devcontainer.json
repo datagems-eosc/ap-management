@@ -1,32 +1,29 @@
 {
-    "name": "WP3.3 - AP Management",
-    "dockerComposeFile": "docker-compose.yml",
-    "service": "devcontainer",
+    "name": "Ap Management",
+    "dockerComposeFile": [
+    "../docker-compose.yml",
+    "./docker-compose.dev.yml"
+    ],
+    "service": "app",
     "workspaceFolder": "/workspaces/${localWorkspaceFolderBasename}",
     "features": {
         "ghcr.io/devcontainers-extra/features/uv:1": {},
         "ghcr.io/devcontainers-extra/features/ruff:1": {},
-        "ghcr.io/devcontainers/features/git-lfs:1": {},
-        "ghcr.io/devcontainers/features/docker-in-docker:2": {
+        "ghcr.io/devcontainers/features/docker-in-docker:3.0.1": {
             "moby": false
-        },
-        "ghcr.io/rocker-org/devcontainer-features/apt-packages:1": {
-            "packages": "graphviz"
         }
+
     },
     "customizations": {
         "vscode": {
             "extensions": [
                 "ms-python.python",
-                "github.copilot",
-                "github.copilot-chat",
                 "humao.rest-client",
                 "ms-python.vscode-pylance",
                 "charliermarsh.ruff",
                 "ms-python.bandit",
                 "ms-python.debugpy",
                 "yzhang.markdown-all-in-one",
-                "neo4j-extensions.neo4j-for-vscode",
                 "redhat.vscode-yaml"
             ],
             "settings": {

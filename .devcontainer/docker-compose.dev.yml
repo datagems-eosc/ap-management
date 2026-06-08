@@ -1,0 +1,13 @@
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/python:3.14-trixie
+    volumes:
+      - ..:/workspaces:cached
+    command: sleep infinity
+    environment:
+      - MOMA_MANAGEMENT_URL=http://moma-management:5000
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    depends_on:
+      neo4j:
+        condition: service_healthy
