@@ -1,30 +1,19 @@
-## v0.1.2 (2026-01-15)
+## Unreleased
 
-### Fix
+### Breaking Changes
 
-- Adding dynamic ROOT_PATH configuration for fastAPI to be able to serve openapis behind a reverse proxy
+- Project structure rebuilt: AP endpoints moved from `aps/` to `analytical_patterns/` module
+- Removed standalone `health`, `aps`, and `tasks` routers in favour of consolidated routing
 
-## v0.1.1 (2026-01-15)
+### Features
 
-### Fix
+- Add `POST /analytical_patterns/compose` endpoint to combine multiple analytical patterns into one
+- Add composed AP fixtures and generated output examples under `assets/composed/` and `generated/`
 
-- Adding dynamic ROOT_PATH configuration for fastAPI to be able to serve openapis behind a reverse proxy
+### Chores
 
-## v0.1.1 (2026-01-15)
-
-### Fix
-
-- Update Docker image workflow for consistency and clarity
-- Update Python version to 3.13 in deployment workflow
-
-## v0.1.0 (2026-01-15)
-
-### Feat
-
-- Enhancing ap check explanation
-- Implementation of GET /tasks/{id}/aps
-
-### Fix
-
-- Allowing labels containing ":" in AP nodes and edges
-- Removing @id alias for id, it is not an intended behavior
+- Update devcontainer to use `docker-compose.dev.yml` and revised post-create script
+- Add `docker-compose.yml` for local stack bring-up
+- Refresh documentation (architecture, configuration, index)
+- Add unit and integration tests for composer strategies (`simple` and `agentic`)
+- Update `uv.lock` dependency tree
