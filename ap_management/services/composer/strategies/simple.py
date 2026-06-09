@@ -31,7 +31,7 @@ class SimpleComposition(CompositionStrategy):
 
         return True, ""
 
-    def generate_mapping(self, ap1: dict, ap2: dict) -> Tuple[bool, List[Mapping]]:
+    def generate_mapping(self, ap1: dict, ap2: dict) -> Tuple[True, List[Mapping], str]:
         ap_1_ops = [
             op for op in ap1["nodes"]
             if any(label.lower() == "operator" for label in op["labels"])
@@ -65,4 +65,4 @@ class SimpleComposition(CompositionStrategy):
             )
             mappings.append(mapping)
 
-        return True, mappings
+        return True, mappings, ""

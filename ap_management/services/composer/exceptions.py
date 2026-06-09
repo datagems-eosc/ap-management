@@ -4,3 +4,7 @@ class CompositionInputError(ValueError):
 
 class CompositionInternalError(RuntimeError):
     """Raised when the composition logic itself produces an invalid result."""
+
+
+class CompositionImpossibleError(RuntimeError):
+    """Raised when the APs are deemed incompatible."""

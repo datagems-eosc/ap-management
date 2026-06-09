@@ -10,6 +10,6 @@ class CompositionStrategy(Protocol):
         """Check if the strategy can be applied to the given APs. Returns a tuple of (is_possible, reason). If is_possible is False, reason should explain why."""
         ...
 
-    def generate_mapping(self, ap1: Dict[str, Any], ap2: Dict[str, Any]) -> Tuple[bool, List[Mapping]]:
+    def generate_mapping(self, ap1: Dict[str, Any], ap2: Dict[str, Any]) -> Tuple[True, List[Mapping], str]:
         """Generate a mapping for the given APs."""
         ...

@@ -12,7 +12,11 @@ from ap_management.generated.moma_management.moma_management_client import (
     MomaManagementClient,
 )
 
-from .exceptions import CompositionInputError, CompositionInternalError
+from .exceptions import (
+    CompositionImpossibleError,
+    CompositionInputError,
+    CompositionInternalError,
+)
 from .mapping import Mapping
 from .strategies.strategy import CompositionStrategy
 
@@ -56,10 +60,9 @@ class Composer:
             raise CompositionInputError(
                 "No composition strategy can be applied to the given APs")
 
-        ok, mappings = strategy.generate_mapping(ap1, ap2)
+        ok, mappings, error = strategy.generate_mapping(ap1, ap2)
         if not ok:
-            raise CompositionInternalError(
-                "Failed to generate mapping for the given APs")
+            raise CompositionImpossibleError(error)
 
         # Stitch the two APs together based on the generated mapping
         composed_ap = self._stitch(ap1, ap2, mappings)

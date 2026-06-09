@@ -48,7 +48,7 @@ class AgenticComposition(CompositionStrategy):
         # NOTE: We can always (try to) use the agentic strategy
         return True, ""
 
-    def generate_mapping(self, ap1: dict, ap2: dict) -> Tuple[bool, List[Mapping]]:
+    def generate_mapping(self, ap1: dict, ap2: dict) -> Tuple[True, List[Mapping], str]:
         ap1_ops = [op for op in ap1["nodes"] if any(
             label.lower() == "operator" for label in op["labels"])]
         ap2_ops = [op for op in ap2["nodes"] if any(
@@ -76,7 +76,7 @@ class AgenticComposition(CompositionStrategy):
         if not report.compatible:
             logger.info("Composition incompatible: %s", report.reason)
 
-        return report.compatible, report.mappings
+        return report.compatible, report.mappings, report.reason or ""
 
 
 SYSTEM_PROMPT = """

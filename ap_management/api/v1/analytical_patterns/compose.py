@@ -7,7 +7,11 @@ from pydantic import BaseModel
 
 from ap_management.di import get_composer
 from ap_management.services.composer.composer import Composer
-from ap_management.services.composer.exceptions import CompositionInputError, CompositionInternalError
+from ap_management.services.composer.exceptions import (
+    CompositionImpossibleError,
+    CompositionInputError,
+    CompositionInternalError,
+)
 
 logger = getLogger(__name__)
 
@@ -15,6 +19,10 @@ logger = getLogger(__name__)
 class ComposePayload(BaseModel):
     ap1: Dict[str, Any]
     ap2: Dict[str, Any]
+
+
+class ErrorResponse(BaseModel):
+    detail: str
 
 
 async def compose_aps(
@@ -31,14 +39,8 @@ async def compose_aps(
     try:
         composed_ap = await svc.compose(body.ap1, body.ap2)
         return JSONResponse(content=composed_ap)
-    except CompositionInputError as e:
-        raise HTTPException(status_code=422, detail=str(e))
-    except CompositionInternalError as e:
-        logger.error(f"Composition produced an invalid AP: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail="Composition failed. Check logs for details."
-        )
+    except (CompositionInputError, CompositionImpossibleError) as e:
+        raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         logger.error(f"Unexpected error composing APs: {e}")
         raise HTTPException(
