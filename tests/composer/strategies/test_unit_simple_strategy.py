@@ -15,6 +15,6 @@ def test_simple_strategy(case: ApTestCase, strat: SimpleComposition):
     if not is_possible:
         return
 
-    success, mapping = strat.generate_mapping(case.ap1, case.ap2)
+    success, mapping, error = strat.generate_mapping(case.ap1, case.ap2)
     assert success == case.simple.succeeds, f"Expected succeeds={case.simple.succeeds} but got {success}. Mapping: {mapping}"
     assert mapping == case.expected_mappings

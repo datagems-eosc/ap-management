@@ -21,7 +21,7 @@ def test_agentic_strategy(case: ApTestCase, strat: AgenticComposition):
     if not case.agentic.applicable:
         pytest.skip("Agentic strategy is not applicable for this test case.")
 
-    success, mapping = strat.generate_mapping(case.ap1, case.ap2)
+    success, mapping, error = strat.generate_mapping(case.ap1, case.ap2)
 
     assert success == case.agentic.succeeds, dumps(mapping, indent=2)
     if case.agentic.succeeds:
@@ -33,7 +33,8 @@ def test_bench_agentic_strategy(case: ApTestCase, strat: AgenticComposition, ben
     if not case.agentic.applicable:
         pytest.skip("Agentic strategy is not applicable for this test case.")
 
-    success, mapping = benchmark(strat.generate_mapping, case.ap1, case.ap2)
+    success, mapping, error = benchmark(
+        strat.generate_mapping, case.ap1, case.ap2)
     assert success == case.agentic.succeeds, dumps(mapping, indent=2)
 
     if case.agentic.succeeds:
