@@ -162,6 +162,22 @@ class Composer:
             ap1["nodes"].extend(stitching_result["nodes"])
             ap1["edges"].extend(stitching_result["edges"])
 
+        # Add a "follows" edge from the last operator of AP1 to the first operator of AP2
+        ap_1_ops = [
+            op for op in ap1["nodes"]
+            if any(label.lower() == "operator" for label in op["labels"])
+        ]
+        ap_2_ops = [
+            op for op in ap2["nodes"]
+            if any(label.lower() == "operator" for label in op["labels"])
+        ]
+        ap1["edges"].append({
+            "from": ap_2_ops[0]["id"],
+            "labels": ["follows"],
+            "to": ap_1_ops[-1]["id"],
+            "properties": {}
+        })
+
         # Copy all nodes and edges from AP2 to AP1 except for the Analytical Pattern node
         ap1["nodes"].extend([
             node for node in ap2["nodes"]
@@ -179,22 +195,6 @@ class Composer:
             if edge["labels"] != ["consist_of"]:
                 continue
             ap1["edges"][i]["from"] = ap1_analytical_pattern_node["id"]
-
-        # Add a "follows" edge from the last operator of AP1 to the first operator of AP2
-        ap_1_ops = [
-            op for op in ap1["nodes"]
-            if any(label.lower() == "operator" for label in op["labels"])
-        ]
-        ap_2_ops = [
-            op for op in ap2["nodes"]
-            if any(label.lower() == "operator" for label in op["labels"])
-        ]
-        ap1["edges"].append({
-            "from": ap_2_ops[0]["id"],
-            "labels": ["follows"],
-            "to": ap_1_ops[-1]["id"],
-            "properties": {}
-        })
 
         return ap1
 
