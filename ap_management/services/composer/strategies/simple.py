@@ -1,6 +1,7 @@
 
 from typing import List, Tuple
 
+from ap_management.services.composer.graph_utils import find_entry_operator, find_terminal_operator
 from ap_management.services.composer.mapping import Mapping, MappingEndpoint
 
 from .strategy import CompositionStrategy
@@ -9,56 +10,51 @@ from .strategy import CompositionStrategy
 class SimpleComposition(CompositionStrategy):
 
     def is_possible(self, ap1: dict, ap2: dict) -> Tuple[bool, str]:
-        ap_1_ops = [
-            op for op in ap1["nodes"]
-            if any(label.lower() == "operator" for label in op["labels"])
-        ]
-        ap_2_ops = [
-            op for op in ap2["nodes"]
-            if any(label.lower() == "operator" for label in op["labels"])
-        ]
+        ap1_terminal = find_terminal_operator(ap1)
+        ap2_entry = find_entry_operator(ap2)
 
-        ap_1_last_op_outputs = ap_1_ops[-1]["properties"]["outputs"]
-        ap_2_first_op_inputs = ap_2_ops[0]["properties"]["inputs"]
+        ap1_outputs = ap1_terminal.get("properties", {}).get("outputs")
+        ap2_inputs = ap2_entry.get("properties", {}).get("inputs")
 
-        if len(ap_1_last_op_outputs) != len(ap_2_first_op_inputs):
+        if ap1_outputs is None:
+            return False, "AP1 terminal operator has no 'outputs' property"
+        if ap2_inputs is None:
+            return False, "AP2 entry operator has no 'inputs' property"
+
+        if len(ap1_outputs) != len(ap2_inputs):
             return False, "AP1 last operator outputs and AP2 first operator inputs have different lengths"
 
-        for ap1_last_op_output_param, ap2_first_op_input_param in zip(ap_1_last_op_outputs, ap_2_first_op_inputs):
+        for out_param, in_param in zip(ap1_outputs, ap2_inputs):
             # NOTE: This ignores the complex types as return case, ie array or objects
-            if ap1_last_op_output_param["type"] != ap2_first_op_input_param["type"]:
+            if out_param["type"] != in_param["type"]:
                 return False, "AP1 last operator outputs and AP2 first operator inputs have different types"
 
         return True, ""
 
     def generate_mapping(self, ap1: dict, ap2: dict) -> Tuple[True, List[Mapping], str]:
-        ap_1_ops = [
-            op for op in ap1["nodes"]
-            if any(label.lower() == "operator" for label in op["labels"])
-        ]
-        ap_2_ops = [
-            op for op in ap2["nodes"]
-            if any(label.lower() == "operator" for label in op["labels"])
-        ]
-        if not ap_1_ops or not ap_2_ops:
-            return False, []
-        ap_1_last_op_outputs = ap_1_ops[-1]["properties"]["outputs"]
-        ap_2_first_op_inputs = ap_2_ops[0]["properties"]["inputs"]
+        ap1_terminal = find_terminal_operator(ap1)
+        ap2_entry = find_entry_operator(ap2)
+
+        ap1_outputs = ap1_terminal.get("properties", {}).get("outputs", [])
+        ap2_inputs = ap2_entry.get("properties", {}).get("inputs", [])
+
+        if not ap1_outputs or not ap2_inputs:
+            return False, [], "No outputs or inputs to map"
 
         mappings = []
-        for ap1_last_op_output_param, ap2_first_op_input_param in zip(ap_1_last_op_outputs, ap_2_first_op_inputs):
+        for out_param, in_param in zip(ap1_outputs, ap2_inputs):
             mapping = Mapping(
                 source=MappingEndpoint(
-                    node_id=ap_1_ops[-1]["id"],
-                    name=ap1_last_op_output_param["name"],
-                    path=f"['outputs']['{ap1_last_op_output_param['name']}']",
-                    type=ap1_last_op_output_param["type"],
+                    node_id=ap1_terminal["id"],
+                    name=out_param["name"],
+                    path=f"['outputs']['{out_param['name']}']",
+                    type=out_param["type"],
                 ),
                 destination=MappingEndpoint(
-                    node_id=ap_2_ops[0]["id"],
-                    name=ap2_first_op_input_param["name"],
-                    path=f"['inputs']['{ap2_first_op_input_param['name']}']",
-                    type=ap2_first_op_input_param["type"]
+                    node_id=ap2_entry["id"],
+                    name=in_param["name"],
+                    path=f"['inputs']['{in_param['name']}']",
+                    type=in_param["type"]
                 ),
                 confidence=1.0,
                 reason="The output type of the last operator of AP1 matches the input type of the first operator of AP2."

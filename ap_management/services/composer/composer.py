@@ -1,3 +1,4 @@
+import copy
 from http.client import HTTPException
 from logging import getLogger
 from typing import Any, Dict, List, Tuple
@@ -17,6 +18,7 @@ from .exceptions import (
     CompositionInputError,
     CompositionInternalError,
 )
+from .graph_utils import find_entry_operator, find_terminal_operator
 from .mapping import Mapping
 from .strategies.strategy import CompositionStrategy
 
@@ -53,6 +55,21 @@ class Composer:
         ]
         if not ap_2_ops:
             raise CompositionInputError("AP2 has no operators")
+
+        # Guard: operators must expose inputs/outputs as node properties
+        ap1_terminal = find_terminal_operator(ap1)
+        if "outputs" not in ap1_terminal.get("properties", {}):
+            raise CompositionInputError(
+                f"AP1 terminal operator '{ap1_terminal.get('properties', {}).get('name', ap1_terminal['id'])}' "
+                "has no 'outputs' property"
+            )
+
+        ap2_entry = find_entry_operator(ap2)
+        if "inputs" not in ap2_entry.get("properties", {}):
+            raise CompositionInputError(
+                f"AP2 entry operator '{ap2_entry.get('properties', {}).get('name', ap2_entry['id'])}' "
+                "has no 'inputs' property"
+            )
 
         # Find a strategy that can be applied to the given APs
         strategy = self._select_strategy(ap1, ap2)
@@ -152,7 +169,9 @@ class Composer:
 
     def _stitch(self, ap1: Dict[str, Any], ap2: Dict[str, Any], mapping: List[Mapping]) -> Dict[str, Any]:
         """
-        Merge two APs together based on the given mapping by generating new nodes and edges for stitching, copying all nodes and edges from AP2 to AP1 except for the Analytical Pattern node, and updating "consist_of" edges from AP2 to point to the Analytical Pattern node of AP1.
+        Merge two APs together based on the given mapping by generating new nodes and edges for stitching,
+        copying all nodes and edges from AP2 to AP1 except for the Analytical Pattern node, and
+        updating "consist_of" edges from AP2 to point to the Analytical Pattern node of AP1.
         Args:
             ap1: The first analytical pattern.
             ap2: The second analytical pattern.
@@ -160,32 +179,34 @@ class Composer:
         Returns:
             The stitched analytical pattern.
         """
+        # Sanity check: If ap1 and ap2 are pointers to the same object, it would induce corruption as ap1 is modified in place.
+        # This should nver happen from the API, but may in testing
+        if ap1 is ap2:
+            ap2 = copy.deepcopy(ap2)
+
         for m in mapping:
             stitching_result = self._generate_new_nodes_and_edges(m)
             ap1["nodes"].extend(stitching_result["nodes"])
             ap1["edges"].extend(stitching_result["edges"])
 
-        # Add a "follows" edge from the last operator of AP1 to the first operator of AP2
-        ap_1_ops = [
-            op for op in ap1["nodes"]
-            if any(label.lower() == "operator" for label in op["labels"])
-        ]
-        ap_2_ops = [
-            op for op in ap2["nodes"]
-            if any(label.lower() == "operator" for label in op["labels"])
-        ]
+        # Add a "follows" edge from AP2's entry operator to AP1's terminal operator
+        ap1_terminal = find_terminal_operator(ap1)
+        ap2_entry = find_entry_operator(ap2)
         ap1["edges"].append({
-            "from": ap_2_ops[0]["id"],
+            "from": ap2_entry["id"],
             "labels": ["follows"],
-            "to": ap_1_ops[-1]["id"],
+            "to": ap1_terminal["id"],
             "properties": {}
         })
 
-        # Copy all nodes and edges from AP2 to AP1 except for the Analytical Pattern node
+        # Copy all nodes from AP2 to AP1 except for the Analytical Pattern node
         ap1["nodes"].extend([
             node for node in ap2["nodes"]
             if "Analytical_Pattern" not in node["labels"]
         ])
+
+        # Copy all edges from AP2 to AP1 (consist_of edges will be repointed below)
+        ap1["edges"].extend([{**e} for e in ap2["edges"]])
 
         # Change the id of the Analytical Pattern node of AP1 to a new id to avoid conflicts
         ap1_analytical_pattern_node = next(
@@ -193,7 +214,7 @@ class Composer:
         )
         ap1_analytical_pattern_node["id"] = str(uuid4())
 
-        # Update "consist_of" edges to match the new Analytical Pattern node id
+        # Update all "consist_of" edges (from both AP1 and AP2) to point to the new AP node
         for i, edge in enumerate(ap1["edges"]):
             if edge["labels"] != ["consist_of"]:
                 continue

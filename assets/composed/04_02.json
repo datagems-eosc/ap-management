@@ -129,6 +129,13 @@
       }
     },
     {
+      "from": "1a2afad6-175e-4d4e-b29b-e6d1d264294e",
+      "to": "68281dc0-9bb6-4caa-8bf8-b7d0054f1729",
+      "labels": [
+        "consist_of"
+      ]
+    },
+    {
       "from": "68281dc0-9bb6-4caa-8bf8-b7d0054f1729",
       "labels": [
         "follows"
