@@ -2,19 +2,19 @@
     "$schema": "https://raw.githubusercontent.com/datagems-eosc/moma-management/refs/tags/v2.3.0/moma_management/domain/schema/moma.schema.json",
     "nodes": [
         {
-            "id": "06-ap-id",
+            "id": "a6a60000-0000-4000-8000-000000000001",
             "labels": [
                 "Analytical_Pattern"
             ],
             "properties": {
-                "name": "NL Query and Schema AP",
+                "name": "NL Query and Schema Extraction",
                 "description": "Translates a natural-language query to SQL and independently extracts the DB schema.",
                 "process": "query",
                 "publishedDate": "2026-06-15"
             }
         },
         {
-            "id": "06-op-a",
+            "id": "a6a60000-0000-4000-8000-000000000002",
             "labels": [
                 "Text_To_SQL_Operator",
                 "Operator"
@@ -43,7 +43,7 @@
             }
         },
         {
-            "id": "06-op-b",
+            "id": "a6a60000-0000-4000-8000-000000000003",
             "labels": [
                 "Schema_Analyzer_Operator",
                 "Operator"
@@ -74,22 +74,22 @@
     ],
     "edges": [
         {
-            "from": "06-ap-id",
-            "to": "06-op-a",
+            "from": "a6a60000-0000-4000-8000-000000000001",
+            "to": "a6a60000-0000-4000-8000-000000000002",
             "labels": [
                 "consist_of"
             ]
         },
         {
-            "from": "06-ap-id",
-            "to": "06-op-b",
+            "from": "a6a60000-0000-4000-8000-000000000001",
+            "to": "a6a60000-0000-4000-8000-000000000003",
             "labels": [
                 "consist_of"
             ]
         },
         {
-            "from": "06-op-b",
-            "to": "06-op-a",
+            "from": "a6a60000-0000-4000-8000-000000000003",
+            "to": "a6a60000-0000-4000-8000-000000000002",
             "labels": [
                 "follows"
             ],

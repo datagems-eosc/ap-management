@@ -2,7 +2,7 @@
     "$schema": "https://raw.githubusercontent.com/datagems-eosc/moma-management/refs/tags/v2.3.0/moma_management/domain/schema/moma.schema.json",
     "nodes": [
         {
-            "id": "08-ap-id",
+            "id": "a8a80000-0000-4000-8000-000000000001",
             "labels": [
                 "Analytical_Pattern"
             ],
@@ -14,7 +14,7 @@
             }
         },
         {
-            "id": "08-op",
+            "id": "a8a80000-0000-4000-8000-000000000002",
             "labels": [
                 "Provenance_Report_Operator",
                 "Operator"
@@ -45,8 +45,8 @@
     ],
     "edges": [
         {
-            "from": "08-ap-id",
-            "to": "08-op",
+            "from": "a8a80000-0000-4000-8000-000000000001",
+            "to": "a8a80000-0000-4000-8000-000000000002",
             "labels": [
                 "consist_of"
             ]

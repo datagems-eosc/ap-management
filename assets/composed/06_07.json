@@ -7,14 +7,14 @@
         "Analytical_Pattern"
       ],
       "properties": {
-        "name": "NL Query and Schema AP",
+        "name": "NL Query and Schema Extraction",
         "description": "Translates a natural-language query to SQL and independently extracts the DB schema.",
         "process": "query",
         "publishedDate": "2026-06-15"
       }
     },
     {
-      "id": "06-op-a",
+      "id": "a6a60000-0000-4000-8000-000000000002",
       "labels": [
         "Text_To_SQL_Operator",
         "Operator"
@@ -43,7 +43,7 @@
       }
     },
     {
-      "id": "06-op-b",
+      "id": "a6a60000-0000-4000-8000-000000000003",
       "labels": [
         "Schema_Analyzer_Operator",
         "Operator"
@@ -92,7 +92,7 @@
       }
     },
     {
-      "id": "07-op",
+      "id": "a7a70000-0000-4000-8000-000000000002",
       "labels": [
         "SQL_With_Context_Operator",
         "Operator"
@@ -130,35 +130,35 @@
   "edges": [
     {
       "from": "c0000000-0000-0000-0000-000000000001",
-      "to": "06-op-a",
+      "to": "a6a60000-0000-4000-8000-000000000002",
       "labels": [
         "consist_of"
       ]
     },
     {
       "from": "c0000000-0000-0000-0000-000000000001",
-      "to": "06-op-b",
+      "to": "a6a60000-0000-4000-8000-000000000003",
       "labels": [
         "consist_of"
       ]
     },
     {
       "from": "c0000000-0000-0000-0000-000000000001",
-      "to": "07-op",
+      "to": "a7a70000-0000-4000-8000-000000000002",
       "labels": [
         "consist_of"
       ]
     },
     {
-      "from": "06-op-b",
-      "to": "06-op-a",
+      "from": "a6a60000-0000-4000-8000-000000000003",
+      "to": "a6a60000-0000-4000-8000-000000000002",
       "labels": [
         "follows"
       ],
       "properties": {}
     },
     {
-      "from": "06-op-a",
+      "from": "a6a60000-0000-4000-8000-000000000002",
       "labels": [
         "output"
       ],
@@ -170,7 +170,7 @@
       }
     },
     {
-      "from": "07-op",
+      "from": "a7a70000-0000-4000-8000-000000000002",
       "labels": [
         "input"
       ],
@@ -182,7 +182,7 @@
       }
     },
     {
-      "from": "06-op-b",
+      "from": "a6a60000-0000-4000-8000-000000000003",
       "labels": [
         "output"
       ],
@@ -194,7 +194,7 @@
       }
     },
     {
-      "from": "07-op",
+      "from": "a7a70000-0000-4000-8000-000000000002",
       "labels": [
         "input"
       ],
@@ -206,19 +206,19 @@
       }
     },
     {
-      "from": "07-op",
+      "from": "a7a70000-0000-4000-8000-000000000002",
       "labels": [
         "follows"
       ],
-      "to": "06-op-a",
+      "to": "a6a60000-0000-4000-8000-000000000002",
       "properties": {}
     },
     {
-      "from": "07-op",
+      "from": "a7a70000-0000-4000-8000-000000000002",
       "labels": [
         "follows"
       ],
-      "to": "06-op-b",
+      "to": "a6a60000-0000-4000-8000-000000000003",
       "properties": {}
     }
   ]

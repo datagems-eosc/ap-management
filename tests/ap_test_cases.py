@@ -128,13 +128,13 @@ AP_TEST_CASES = [
         expected_mappings=[
             Mapping(
                 source=MappingEndpoint(
-                    node_id='06-op-a',
+                    node_id='a6a60000-0000-4000-8000-000000000002',
                     name='query',
                     path="['outputs']['query']",
                     type='string'
                 ),
                 destination=MappingEndpoint(
-                    node_id='07-op',
+                    node_id='a7a70000-0000-4000-8000-000000000002',
                     name='query',
                     path="['inputs']['query']",
                     type='string'
@@ -142,13 +142,13 @@ AP_TEST_CASES = [
             ),
             Mapping(
                 source=MappingEndpoint(
-                    node_id='06-op-b',
+                    node_id='a6a60000-0000-4000-8000-000000000003',
                     name='schema',
                     path="['outputs']['schema']",
                     type='string'
                 ),
                 destination=MappingEndpoint(
-                    node_id='07-op',
+                    node_id='a7a70000-0000-4000-8000-000000000002',
                     name='schema',
                     path="['inputs']['schema']",
                     type='string'
@@ -173,7 +173,7 @@ AP_TEST_CASES = [
                     type='string'
                 ),
                 destination=MappingEndpoint(
-                    node_id='08-op',
+                    node_id='a8a80000-0000-4000-8000-000000000002',
                     name='provenance',
                     path="['inputs']['provenance']",
                     type='string'
