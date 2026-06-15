@@ -44,6 +44,18 @@ def _extract_op_schema(op: dict, fields_key: str) -> dict:
     }
 
 
+def _extract_all_ap1_ops_schema(ap: dict) -> list:
+    """Return output schemas for every operator in AP1 so the LLM can source from any of them."""
+    nodes, edges = ap["nodes"], ap["edges"]
+    op_ids = {n["id"] for n in nodes if any(l.lower() == "operator" for l in n["labels"])}
+    # Sort by step for a stable, readable ordering
+    ops = sorted(
+        (n for n in nodes if n["id"] in op_ids),
+        key=lambda n: n.get("properties", {}).get("step", 0),
+    )
+    return [_extract_op_schema(op, "outputs") for op in ops]
+
+
 class AgenticComposition(CompositionStrategy):
 
     def __init__(self, llm: LLM):
@@ -54,11 +66,10 @@ class AgenticComposition(CompositionStrategy):
         return True, ""
 
     def generate_mapping(self, ap1: dict, ap2: dict) -> Tuple[True, List[Mapping], str]:
-        ap1_terminal = find_terminal_operator(ap1)
         ap2_entry = find_entry_operator(ap2)
 
         user_query = "\n".join([
-            f"AP1: {_extract_op_schema(ap1_terminal, 'outputs')}",
+            f"AP1 operators: {_extract_all_ap1_ops_schema(ap1)}",
             f"AP2: {_extract_op_schema(ap2_entry, 'inputs')}",
         ])
 
@@ -83,19 +94,20 @@ class AgenticComposition(CompositionStrategy):
 
 
 SYSTEM_PROMPT = """
-You are an AP Composition Agent. Map AP1's last operator outputs to AP2's first operator inputs.
+You are an AP Composition Agent. Map outputs from any of AP1's operators to AP2's first operator inputs.
 
 Rules:
 1. Prefer exact name matches; fall back to semantic equivalence (e.g. "query"→"sql" if both are SQL strings).
 2. An output object's field may satisfy an input with a matching type.
-3. Ignore unused AP1 outputs. Every AP2 input where required=true needs exactly one source; inputs where required=false may be left unmapped.
+3. Ignore unused AP1 outputs. Every AP2 input where required=true needs exactly one source from any AP1 operator; inputs where required=false may be left unmapped.
 4. Type compatibility: string→string ✓, number→number ✓, boolean→boolean ✓, string→number ✗, object→string ✗, array→string ✗ (ambiguous: cannot determine which element to use), array<T>→array<U> ✗ when T≠U (incompatible item types).
-5. If any required AP2 input cannot be satisfied, the composition is incompatible.
+5. If any required AP2 input cannot be satisfied by any AP1 operator, the composition is incompatible.
 
-Input: two operators, each with an id and their fields (name + type; required; default; properties if object; items if array).
-Use each operator's id as node_id in the mapping. Set name to the bare parameter name (e.g. "query"). Format paths as ['outputs']['name'] or ['inputs']['name'].
+Input: a list of AP1 operators (each with an id and outputs) and AP2's first operator (with an id and inputs). Fields include name, type, required, default, and properties/items for complex types.
+In each mapping, set source.node_id to the id of the specific AP1 operator whose output is used. Set name to the bare parameter name (e.g. "query"). Format paths as ['outputs']['name'] or ['inputs']['name'].
 For nested object fields, extend the path: ['outputs']['payload']['query']; set name to the leaf field name.
 
-Compatible: {"compatible": true, "mappings": [{"source": {"node_id": "<ap1.id>", "name": "query", "path": "['outputs']['query']", "type": "string"}, "destination": {"node_id": "<ap2.id>", "name": "sql", "path": "['inputs']['sql']", "type": "string"}, "reason": "Both represent an SQL query."}]}
-Incompatible: {"compatible": false, "reason": "AP2 requires X but AP1 does not produce it."}
+Compatible (single source): {"compatible": true, "mappings": [{"source": {"node_id": "<ap1_op.id>", "name": "query", "path": "['outputs']['query']", "type": "string"}, "destination": {"node_id": "<ap2.id>", "name": "sql", "path": "['inputs']['sql']", "type": "string"}, "reason": "Both represent an SQL query."}]}
+Compatible (multi-source): {"compatible": true, "mappings": [{"source": {"node_id": "<ap1_op_a.id>", ...}, "destination": {...}}, {"source": {"node_id": "<ap1_op_b.id>", ...}, "destination": {...}}]}
+Incompatible: {"compatible": false, "reason": "AP2 requires X but no AP1 operator produces it."}
 """

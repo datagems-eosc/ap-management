@@ -189,15 +189,19 @@ class Composer:
             ap1["nodes"].extend(stitching_result["nodes"])
             ap1["edges"].extend(stitching_result["edges"])
 
-        # Add a "follows" edge from AP2's entry operator to AP1's terminal operator
-        ap1_terminal = find_terminal_operator(ap1)
+        # Add "follows" edges from AP2's entry to each AP1 operator that provides output to AP2.
+        # If a mapping references a non-terminal AP1 operator, AP2 must explicitly follow it too.
         ap2_entry = find_entry_operator(ap2)
-        ap1["edges"].append({
-            "from": ap2_entry["id"],
-            "labels": ["follows"],
-            "to": ap1_terminal["id"],
-            "properties": {}
-        })
+        ap1_source_ids = {m.source.node_id for m in mapping}
+        if not ap1_source_ids:
+            ap1_source_ids = {find_terminal_operator(ap1)["id"]}
+        for source_id in ap1_source_ids:
+            ap1["edges"].append({
+                "from": ap2_entry["id"],
+                "labels": ["follows"],
+                "to": source_id,
+                "properties": {}
+            })
 
         # Copy all nodes from AP2 to AP1 except for the Analytical Pattern node
         ap1["nodes"].extend([

@@ -118,4 +118,68 @@ AP_TEST_CASES = [
         agentic=StrategyOutcome(applicable=True, succeeds=False),
         expected_mappings=[]
     ),
+    ApTestCase(
+        name="Cross-operator input mapping",
+        description="AP2's single operator sources one input from AP1's first operator and another from AP1's second operator.",
+        ap1=_load_ap("06_ap_two_op_chain.json"),
+        ap2=_load_ap("07_ap_needs_cross_op.json"),
+        simple=StrategyOutcome(applicable=False, succeeds=False),
+        agentic=StrategyOutcome(applicable=True, succeeds=True),
+        expected_mappings=[
+            Mapping(
+                source=MappingEndpoint(
+                    node_id='06-op-a',
+                    name='query',
+                    path="['outputs']['query']",
+                    type='string'
+                ),
+                destination=MappingEndpoint(
+                    node_id='07-op',
+                    name='query',
+                    path="['inputs']['query']",
+                    type='string'
+                )
+            ),
+            Mapping(
+                source=MappingEndpoint(
+                    node_id='06-op-b',
+                    name='schema',
+                    path="['outputs']['schema']",
+                    type='string'
+                ),
+                destination=MappingEndpoint(
+                    node_id='07-op',
+                    name='schema',
+                    path="['inputs']['schema']",
+                    type='string'
+                )
+            ),
+        ],
+        expected_ap=_load_ap("composed/06_07.json")
+    ),
+    ApTestCase(
+        name="Pre-existing links preserved",
+        description="AP1 is already a composed AP with ResultType nodes and output/input edges; composing again must not lose those existing edges.",
+        ap1=_load_ap("composed/01_02.json"),
+        ap2=_load_ap("08_ap_provenance_consumer.json"),
+        simple=StrategyOutcome(applicable=True, succeeds=True),
+        agentic=StrategyOutcome(applicable=True, succeeds=True),
+        expected_mappings=[
+            Mapping(
+                source=MappingEndpoint(
+                    node_id='68281dc0-9bb6-4caa-8bf8-b7d0054f1729',
+                    name='provenance',
+                    path="['outputs']['provenance']",
+                    type='string'
+                ),
+                destination=MappingEndpoint(
+                    node_id='08-op',
+                    name='provenance',
+                    path="['inputs']['provenance']",
+                    type='string'
+                )
+            ),
+        ],
+        expected_ap=_load_ap("composed/01_02_08.json")
+    ),
 ]
