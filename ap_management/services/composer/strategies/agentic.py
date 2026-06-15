@@ -4,10 +4,12 @@ from typing import List, Optional, Tuple
 
 # from headroom import compress
 from litellm import Message
+from moma_management.domain.analytical_pattern import AnalyticalPattern
+from moma_management.domain.generated.nodes.node_schema import Node
 from pydantic import BaseModel
 
 from ap_management.internal.llm import LLM
-from ap_management.services.composer.graph_utils import find_entry_operator, find_terminal_operator
+from ap_management.services.composer.graph_utils import find_entry_operator
 from ap_management.services.composer.mapping import Mapping, MappingEndpoint
 
 from .strategy import CompositionStrategy
@@ -37,21 +39,19 @@ def _field_schema(f: dict) -> dict:
     return schema
 
 
-def _extract_op_schema(op: dict, fields_key: str) -> dict:
+def _extract_op_schema(op: Node, fields_key: str) -> dict:
     return {
-        "id": op["id"],
-        fields_key: [_field_schema(f) for f in op["properties"][fields_key]],
+        "id": str(op.id),
+        fields_key: [_field_schema(f) for f in op.properties.get(fields_key, [])],
     }
 
 
-def _extract_all_ap1_ops_schema(ap: dict) -> list:
+def _extract_all_ap1_ops_schema(ap: AnalyticalPattern) -> list:
     """Return output schemas for every operator in AP1 so the LLM can source from any of them."""
-    nodes, edges = ap["nodes"], ap["edges"]
-    op_ids = {n["id"] for n in nodes if any(l.lower() == "operator" for l in n["labels"])}
-    # Sort by step for a stable, readable ordering
+    op_ids = {str(n.id) for n in ap.nodes if any(l.lower() == "operator" for l in n.labels)}
     ops = sorted(
-        (n for n in nodes if n["id"] in op_ids),
-        key=lambda n: n.get("properties", {}).get("step", 0),
+        (n for n in ap.nodes if str(n.id) in op_ids),
+        key=lambda n: n.properties.get("step", 0),
     )
     return [_extract_op_schema(op, "outputs") for op in ops]
 
@@ -61,11 +61,11 @@ class AgenticComposition(CompositionStrategy):
     def __init__(self, llm: LLM):
         self.llm = llm
 
-    def is_possible(self, _ap1: dict, _ap2: dict) -> Tuple[bool, str]:
+    def is_possible(self, _ap1: AnalyticalPattern, _ap2: AnalyticalPattern) -> Tuple[bool, str]:
         # NOTE: We can always (try to) use the agentic strategy
         return True, ""
 
-    def generate_mapping(self, ap1: dict, ap2: dict) -> Tuple[True, List[Mapping], str]:
+    def generate_mapping(self, ap1: AnalyticalPattern, ap2: AnalyticalPattern) -> Tuple[True, List[Mapping], str]:
         ap2_entry = find_entry_operator(ap2)
 
         user_query = "\n".join([

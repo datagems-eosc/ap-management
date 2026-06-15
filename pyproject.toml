@@ -5,7 +5,7 @@ description = "AP Management repository"
 authors = [{ name = "Lucas Peirone", email = "lucas.peirone@univ-grenoble-alpes.fr" }]
 readme = "README.md"
 keywords = ['python']
-requires-python = ">=3.12,<4.0"
+requires-python = ">=3.14,<4.0"
 classifiers = [
     "Intended Audience :: Developers",
     "Programming Language :: Python",
@@ -22,6 +22,7 @@ dependencies = [
     "microsoft-kiota-serialization-json>=1.10.2",
     "microsoft-kiota-serialization-multipart>=1.10.2",
     "microsoft-kiota-serialization-text>=1.10.2",
+    "moma-domain>=2.7.2",
     "pydantic>=2.13.4",
     "python-dotenv>=1.2.1",
     "structlog>=25.5.0",
@@ -55,3 +56,7 @@ py-modules = ["ap_management"]
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 #addopts = "-n auto --maxprocesses=10"
+
+
+[tool.uv.sources]
+moma-domain = { url = "https://github.com/datagems-eosc/moma-management/releases/download/v2.7.2/moma_domain-2.7.2-py3-none-any.whl" }

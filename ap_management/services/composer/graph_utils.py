@@ -1,28 +1,27 @@
-from typing import Any, Dict
+from moma_management.domain.analytical_pattern import AnalyticalPattern
+from moma_management.domain.generated.nodes.node_schema import Node
 
 
-def _is_operator(node: Dict[str, Any]) -> bool:
-    return any(label.lower() == "operator" for label in node["labels"])
+def _is_operator(node: Node) -> bool:
+    return any(label.lower() == "operator" for label in node.labels)
 
 
-def find_terminal_operator(ap: Dict[str, Any]) -> Dict[str, Any]:
+def find_terminal_operator(ap: AnalyticalPattern) -> Node:
     """
     Return the terminal operator of ap: the one no other operator follows
     (not referenced as `to` in any intra-AP follows edge).
 
     The composer stores follows edges as `from: later_op → to: earlier_op`, so the
-    terminal (last) operator never appears as `to`.  Falls back to the
-    highest-step operator when the topology is ambiguous (e.g. single-op APs
-    or APs that use the opposite edge direction).
+    terminal (last) operator never appears as `to`.
     """
-    nodes, edges = ap["nodes"], ap["edges"]
-    op_ids = {n["id"] for n in nodes if _is_operator(n)}
+    nodes = ap.nodes
+    edges = ap.edges or []
+    op_ids = {str(n.id) for n in nodes if _is_operator(n)}
     ops_as_to = {
-        e["to"] for e in edges
-        if e.get("labels") == ["follows"] and e.get("from") in op_ids and e["to"] in op_ids
+        str(e.to) for e in edges
+        if e.labels == ["follows"] and str(e.from_) in op_ids and str(e.to) in op_ids
     }
-    terminals = [n for n in nodes if _is_operator(
-        n) and n["id"] not in ops_as_to]
+    terminals = [n for n in nodes if _is_operator(n) and str(n.id) not in ops_as_to]
     if len(terminals) > 1:
         raise ValueError(
             f"Wrong graph topology. AP has {len(terminals)} terminal operators, expected exactly 1")
@@ -30,22 +29,20 @@ def find_terminal_operator(ap: Dict[str, Any]) -> Dict[str, Any]:
     return terminals[0]
 
 
-def find_entry_operator(ap: Dict[str, Any]) -> Dict[str, Any]:
+def find_entry_operator(ap: AnalyticalPattern) -> Node:
     """
     Return the entry operator of ap: the one that doesn't follow any other
     operator (not referenced as `from` in any intra-AP follows edge).
-
-    Falls back to the lowest-step operator when the topology is ambiguous.
     """
-    nodes, edges = ap["nodes"], ap["edges"]
-    op_ids = {n["id"] for n in nodes if _is_operator(n)}
+    nodes = ap.nodes
+    edges = ap.edges or []
+    op_ids = {str(n.id) for n in nodes if _is_operator(n)}
     ops_as_from = {
-        e["from"] for e in edges
-        if e.get("labels") == ["follows"] and e.get("from") in op_ids and e["to"] in op_ids
+        str(e.from_) for e in edges
+        if e.labels == ["follows"] and str(e.from_) in op_ids and str(e.to) in op_ids
     }
 
-    entries = [n for n in nodes if _is_operator(
-        n) and n["id"] not in ops_as_from]
+    entries = [n for n in nodes if _is_operator(n) and str(n.id) not in ops_as_from]
     if len(entries) != 1:
         raise ValueError(
             f"Wrong graph topology. AP has {len(entries)} entry operators, expected exactly 1")

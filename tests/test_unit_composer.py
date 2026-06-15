@@ -3,25 +3,29 @@ from typing import Any, Dict
 
 import pytest
 
+from moma_management.domain.analytical_pattern import AnalyticalPattern
+
 from ap_management.services.composer.composer import Composer
 from tests.ap_test_cases import ApTestCase
 
 
 # TODO: Remove this once we can integrate the AP ib
-def _normalize_graph(ap: Dict[str, Any]) -> Dict[str, Any]:
+def _normalize_graph(ap: AnalyticalPattern) -> Dict[str, Any]:
     """
     Replace each node UUID with a stable key derived from its labels + properties
     so that randomly-generated IDs don't break equality checks.
     """
+    raw = ap.model_dump(by_alias=True, mode="json")
+
     def _node_key(node):
         return (tuple(sorted(node["labels"])), dumps(node.get("properties", {}), sort_keys=True))
 
     id_to_stable = {node["id"]: str(i) for i, node in enumerate(
-        sorted(ap["nodes"], key=_node_key))}
+        sorted(raw["nodes"], key=_node_key))}
 
     normalized_nodes = [
         {**node, "id": id_to_stable[node["id"]]}
-        for node in ap["nodes"]
+        for node in raw["nodes"]
     ]
 
     def _remap(val):
@@ -29,14 +33,14 @@ def _normalize_graph(ap: Dict[str, Any]) -> Dict[str, Any]:
 
     normalized_edges = [
         {**edge, "from": _remap(edge["from"]), "to": _remap(edge["to"])}
-        for edge in ap["edges"]
+        for edge in raw["edges"]
     ]
 
     def _sort_key(x):
         return dumps(x, sort_keys=True)
 
     return {
-        **ap,
+        **raw,
         "nodes": sorted(normalized_nodes, key=_sort_key),
         "edges": sorted(normalized_edges, key=_sort_key),
     }

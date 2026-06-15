@@ -1,7 +1,7 @@
-from json import loads
 from pathlib import Path
-from typing import List
+from typing import List, Optional
 
+from moma_management.domain.analytical_pattern import AnalyticalPattern
 from pydantic import BaseModel
 
 from ap_management.services.composer.mapping import Mapping, MappingEndpoint
@@ -20,17 +20,17 @@ class StrategyOutcome(BaseModel):
 class ApTestCase(BaseModel):
     name: str
     description: str = ""
-    ap1: dict
-    ap2: dict
+    ap1: AnalyticalPattern
+    ap2: AnalyticalPattern
     simple: StrategyOutcome
     agentic: StrategyOutcome
     # Correct mapping
     expected_mappings: List[Mapping]
-    expected_ap: dict = None
+    expected_ap: Optional[AnalyticalPattern] = None
 
 
-def _load_ap(filename: str) -> dict:
-    return loads((ASSETS_PATH / filename).read_text())
+def _load_ap(filename: str) -> AnalyticalPattern:
+    return AnalyticalPattern.model_validate_json((ASSETS_PATH / filename).read_text())
 
 
 AP_TEST_CASES = [
