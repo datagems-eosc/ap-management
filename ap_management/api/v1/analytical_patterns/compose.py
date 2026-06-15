@@ -3,6 +3,7 @@ from typing import Any, Dict
 
 from fastapi import Depends, HTTPException
 from fastapi.responses import JSONResponse
+from moma_management.domain.analytical_pattern import AnalyticalPattern
 from pydantic import BaseModel
 
 from ap_management.di import get_composer
@@ -17,8 +18,8 @@ logger = getLogger(__name__)
 
 
 class ComposePayload(BaseModel):
-    ap1: Dict[str, Any]
-    ap2: Dict[str, Any]
+    ap1: AnalyticalPattern
+    ap2: AnalyticalPattern
 
 
 class ErrorResponse(BaseModel):
@@ -31,14 +32,14 @@ async def compose_aps(
 ) -> Dict[str, Any]:
     """
     Create a new AnalyticalPattern in the MoMa graph repository.
-
+d
     The ``input`` edges of the AP **must** reference Data nodes that belong
     to an existing dataset, and the caller must be able to **browse** those
     datasets.  The AP cannot create Dataset nodes itself.
     """
     try:
         composed_ap = await svc.compose(body.ap1, body.ap2)
-        return JSONResponse(content=composed_ap)
+        return JSONResponse(content=composed_ap.model_dump(mode="json", by_alias=True))
     except (CompositionInputError, CompositionImpossibleError) as e:
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
