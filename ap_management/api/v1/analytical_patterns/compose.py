@@ -29,7 +29,7 @@ class ErrorResponse(BaseModel):
 async def compose_aps(
     body: ComposePayload,
     svc: Composer = Depends(get_composer),
-) -> Dict[str, Any]:
+) -> AnalyticalPattern:
     """
     Create a new AnalyticalPattern in the MoMa graph repository.
 d

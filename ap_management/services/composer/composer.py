@@ -69,6 +69,17 @@ class Composer:
                 "has no 'inputs' property"
             )
 
+        # Remap AP2 node/edge IDs if they collide with AP1 (same object or same AP loaded twice).
+        ap1_node_ids = {node.id for node in ap1.nodes}
+        if ap1 is ap2 or any(node.id in ap1_node_ids for node in ap2.nodes):
+            ap2 = copy.deepcopy(ap2)
+            uuid_remap = {node.id: uuid4() for node in ap2.nodes}
+            for node in ap2.nodes:
+                node.id = uuid_remap[node.id]
+            for edge in ap2.edges or []:
+                edge.from_ = uuid_remap.get(edge.from_, edge.from_)
+                edge.to = uuid_remap.get(edge.to, edge.to)
+
         # Find a strategy that can be applied to the given APs
         strategy = self._select_strategy(ap1, ap2)
         if strategy is None:

@@ -1,3 +1,4 @@
+import copy
 from json import dumps
 from typing import Any, Dict
 
@@ -6,7 +7,7 @@ import pytest
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 
 from ap_management.services.composer.composer import Composer
-from tests.ap_test_cases import ApTestCase
+from tests.ap_test_cases import ApTestCase, _load_ap
 
 
 # TODO: Remove this once we can integrate the AP ib
@@ -57,3 +58,17 @@ def test_stitch(case: ApTestCase, no_ai_composer: Composer):
         case.ap1, case.ap2, case.expected_mappings
     )
     assert _normalize_graph(mixed_ap) == _normalize_graph(case.expected_ap)
+
+
+@pytest.mark.asyncio
+async def test_self_composition_no_duplicate_uuids(no_ai_composer: Composer):
+    """Composing an AP with a deepcopy of itself must not produce duplicate node UUIDs."""
+    # 02_ap_sql_explanation has a single operator with both inputs (sql) and outputs (provenance).
+    # Both are type 'string', so SimpleComposition accepts the pairing.
+    ap1 = _load_ap("02_ap_sql_explanation.json")
+    ap2 = copy.deepcopy(ap1)
+
+    result = await no_ai_composer.compose(ap1, ap2)
+
+    node_ids = [str(node.id) for node in result.nodes]
+    assert len(node_ids) == len(set(node_ids)), "Duplicate node UUIDs in self-composed AP"
