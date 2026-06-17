@@ -14,4 +14,4 @@ router.add_api_route(
         200: {"description": "Service is healthy"},
     },
 )
-router.include_router(ap_router, prefix="/analytical-patterns")
+router.include_router(ap_router, prefix="/aps")
