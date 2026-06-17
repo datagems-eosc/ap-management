@@ -9,6 +9,9 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from ap_management.api.v1.routes import router
+from ap_management.middlewares.correlation_id_passtrough import (
+    correlation_id_passtrough,
+)
 
 load_dotenv()
 
@@ -42,6 +45,11 @@ if CORS_ORIGINS:
         allow_methods=["*"],
         allow_headers=["*"],
     )
+
+############
+# Middlewares
+############
+app.middleware("http")(correlation_id_passtrough)
 
 
 @app.get("/")
