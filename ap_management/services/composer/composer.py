@@ -5,7 +5,7 @@ from uuid import UUID, uuid4
 
 from kiota_abstractions.api_error import APIError
 from moma_management.domain.analytical_pattern import AnalyticalPattern
-from moma_management.domain.generated.edges.edge_schema import Edge
+from moma_management.domain.generated.edges.edge_schema import Edge, EdgeLabel
 from moma_management.domain.generated.nodes.node_schema import Node
 
 from ap_management.generated.moma_management.api.v1.aps.validate.validate_post_request_body import (
@@ -152,8 +152,8 @@ class Composer:
         })
 
         input_edge = Edge.model_validate({
-            "from": mapping.destination.node_id,
-            "to": return_node_id,
+            "from": return_node_id,
+            "to": mapping.destination.node_id,
             "labels": ["input"],
             "properties": {"mapping": {f"to{mapping.destination.path}": f"from{result_slot}"}},
         })
@@ -219,7 +219,7 @@ class Composer:
 
         # Update all "consist_of" edges (from both AP1 and AP2) to point to the new AP node
         for edge in ap1.edges:
-            if edge.labels != ["consist_of"]:
+            if edge.labels != [EdgeLabel.consist_of]:
                 continue
             edge.from_ = ap1_analytical_pattern_node.id
 

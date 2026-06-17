@@ -159,7 +159,7 @@ requires-dist = [
     { name = "microsoft-kiota-serialization-json", specifier = ">=1.10.2" },
     { name = "microsoft-kiota-serialization-multipart", specifier = ">=1.10.2" },
     { name = "microsoft-kiota-serialization-text", specifier = ">=1.10.2" },
-    { name = "moma-domain", url = "https://github.com/datagems-eosc/moma-management/releases/download/v2.7.2/moma_domain-2.7.2-py3-none-any.whl" },
+    { name = "moma-domain", url = "https://github.com/datagems-eosc/moma-management/releases/download/v2.8.0/moma_domain-2.8.0-py3-none-any.whl" },
     { name = "pydantic", specifier = ">=2.13.4" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "python-jose", specifier = ">=3.5.0" },
@@ -1068,15 +1068,15 @@ wheels = [
 
 [[package]]
 name = "moma-domain"
-version = "2.7.2"
-source = { url = "https://github.com/datagems-eosc/moma-management/releases/download/v2.7.2/moma_domain-2.7.2-py3-none-any.whl" }
+version = "2.8.0"
+source = { url = "https://github.com/datagems-eosc/moma-management/releases/download/v2.8.0/moma_domain-2.8.0-py3-none-any.whl" }
 dependencies = [
     { name = "deepdiff" },
     { name = "jsonschema" },
     { name = "pydantic" },
 ]
 wheels = [
-    { url = "https://github.com/datagems-eosc/moma-management/releases/download/v2.7.2/moma_domain-2.7.2-py3-none-any.whl", hash = "sha256:878458de8858db8e091857182e47690a79bf2bdab165698d0cba1b11fbb54e3f" },
+    { url = "https://github.com/datagems-eosc/moma-management/releases/download/v2.8.0/moma_domain-2.8.0-py3-none-any.whl", hash = "sha256:e545a1042fe99ff074d288ba556e4fcb2a74ff4a820658d51cddadf2fe5c1b5d" },
 ]
 
 [package.metadata]

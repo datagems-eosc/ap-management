@@ -117,11 +117,11 @@
       }
     },
     {
-      "from": "68281dc0-9bb6-4caa-8bf8-b7d0054f1729",
+      "from": "6d98334c-c009-4246-8ff2-54d2273132e5",
       "labels": [
         "input"
       ],
-      "to": "6d98334c-c009-4246-8ff2-54d2273132e5",
+      "to": "68281dc0-9bb6-4caa-8bf8-b7d0054f1729",
       "properties": {
         "mapping": {
           "to['inputs']['sql']": "from['query']"
