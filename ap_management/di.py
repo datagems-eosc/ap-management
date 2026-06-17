@@ -1,5 +1,7 @@
 import logging
+from functools import lru_cache
 from os import getenv
+from typing import Optional
 
 from dotenv import load_dotenv
 from fastapi import Depends
@@ -9,6 +11,7 @@ from kiota_abstractions.authentication.anonymous_authentication_provider import 
 from kiota_http.httpx_request_adapter import HttpxRequestAdapter
 
 from ap_management.internal.llm import LLM
+from ap_management.services.authentication import Authentication
 from ap_management.services.composer import AgenticComposition, Composer
 from ap_management.services.composer.strategies.simple import SimpleComposition
 
@@ -57,4 +60,20 @@ def get_composer(moma_svc: MomaManagementClient = Depends(get_moma_svc)) -> Comp
             AgenticComposition(get_llm())
         ],
         moma_svc=moma_svc
+    )
+
+
+@lru_cache(maxsize=1)
+def get_authentication_service() -> Optional[Authentication]:
+    """Return a JwtValidator configured from environment variables."""
+    if not getenv("OIDC_ISSUER"):
+        logger.warning("OIDC_ISSUER not set, authentication disabled")
+        return None
+
+    return Authentication(
+        issuer=getenv("OIDC_ISSUER", ""),
+        ttl=int(getenv("JWKS_TTL_SECONDS", "300")),
+        client_id=getenv("OIDC_CLIENT_ID") or None,
+        client_secret=getenv("OIDC_CLIENT_SECRET") or None,
+        exchange_scope=getenv("OIDC_EXCHANGE_SCOPE"),
     )

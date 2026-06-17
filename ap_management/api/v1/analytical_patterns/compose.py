@@ -1,5 +1,5 @@
 from logging import getLogger
-from typing import Any, Dict
+from typing import Never
 
 from fastapi import Depends, HTTPException
 from fastapi.responses import JSONResponse
@@ -7,11 +7,11 @@ from moma_management.domain.analytical_pattern import AnalyticalPattern
 from pydantic import BaseModel
 
 from ap_management.di import get_composer
+from ap_management.middlewares.auth import require_authentication
 from ap_management.services.composer.composer import Composer
 from ap_management.services.composer.exceptions import (
     CompositionImpossibleError,
     CompositionInputError,
-    CompositionInternalError,
 )
 
 logger = getLogger(__name__)
@@ -29,6 +29,7 @@ class ErrorResponse(BaseModel):
 async def compose_aps(
     body: ComposePayload,
     svc: Composer = Depends(get_composer),
+    _auth: Never = Depends(require_authentication())
 ) -> AnalyticalPattern:
     """
     Create a new AnalyticalPattern in the MoMa graph repository.
