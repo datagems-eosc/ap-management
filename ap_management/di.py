@@ -1,6 +1,7 @@
 import logging
 from functools import lru_cache
 from os import getenv
+from pathlib import Path
 from typing import Optional
 
 from dotenv import load_dotenv
@@ -11,9 +12,14 @@ from kiota_abstractions.authentication.anonymous_authentication_provider import 
 from kiota_http.httpx_request_adapter import HttpxRequestAdapter
 
 from ap_management.internal.llm import LLM
+from ap_management.services.ap_catalog.catalog import APCatalog
+from ap_management.services.ap_catalog.local_catalog import LocalAPCatalog
+from ap_management.services.ap_catalog.moma_catalog import MomaCatalog
 from ap_management.services.authentication import Authentication
 from ap_management.services.composer import AgenticComposition, Composer
 from ap_management.services.composer.strategies.simple import SimpleComposition
+from ap_management.services.matchmaker import Matchmaker
+from ap_management.services.planner import Planner
 
 from .generated.moma_management.moma_management_client import MomaManagementClient
 from .logger import configure_logging
@@ -61,6 +67,23 @@ def get_composer(moma_svc: MomaManagementClient = Depends(get_moma_svc)) -> Comp
         ],
         moma_svc=moma_svc
     )
+
+
+def get_catalog(moma_svc: MomaManagementClient = Depends(get_moma_svc)) -> APCatalog:
+    return LocalAPCatalog(Path("/workspaces/ap-management/assets"))
+    # return MomaCatalog(moma_svc)
+
+
+def get_matchmaker(catalog: APCatalog = Depends(get_catalog)) -> Matchmaker:
+    return Matchmaker(llm=get_llm(), catalog=catalog)
+
+
+def get_planner(
+    matchmaker: Matchmaker = Depends(get_matchmaker),
+    composer: Composer = Depends(get_composer),
+    ap_catalog: APCatalog = Depends(get_catalog),
+) -> Planner:
+    return Planner(matchmaker=matchmaker, composer=composer, ap_catalog=ap_catalog)
 
 
 @lru_cache(maxsize=1)

@@ -2,7 +2,10 @@ from typing import List, Tuple
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 
-from ap_management.services.composer.graph_utils import find_entry_operator, find_terminal_operator
+from ap_management.internal.graph_utils import (
+    find_entry_operator,
+    find_terminal_operator,
+)
 from ap_management.services.composer.mapping import Mapping, MappingEndpoint
 
 from .strategy import CompositionStrategy

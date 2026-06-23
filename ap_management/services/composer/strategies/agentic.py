@@ -8,8 +8,8 @@ from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.generated.nodes.node_schema import Node
 from pydantic import BaseModel
 
+from ap_management.internal.graph_utils import find_entry_operator
 from ap_management.internal.llm import LLM
-from ap_management.services.composer.graph_utils import find_entry_operator
 from ap_management.services.composer.mapping import Mapping, MappingEndpoint
 
 from .strategy import CompositionStrategy
@@ -48,7 +48,8 @@ def _extract_op_schema(op: Node, fields_key: str) -> dict:
 
 def _extract_all_ap1_ops_schema(ap: AnalyticalPattern) -> list:
     """Return output schemas for every operator in AP1 so the LLM can source from any of them."""
-    op_ids = {str(n.id) for n in ap.nodes if any(l.lower() == "operator" for l in n.labels)}
+    op_ids = {str(n.id) for n in ap.nodes if any(
+        l.lower() == "operator" for l in n.labels)}
     ops = sorted(
         (n for n in ap.nodes if str(n.id) in op_ids),
         key=lambda n: n.properties.get("step", 0),

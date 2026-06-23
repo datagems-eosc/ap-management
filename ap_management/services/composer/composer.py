@@ -14,13 +14,16 @@ from ap_management.generated.moma_management.api.v1.aps.validate.validate_post_r
 from ap_management.generated.moma_management.moma_management_client import (
     MomaManagementClient,
 )
+from ap_management.internal.graph_utils import (
+    find_entry_operator,
+    find_terminal_operator,
+)
 
 from .exceptions import (
     CompositionImpossibleError,
     CompositionInputError,
     CompositionInternalError,
 )
-from .graph_utils import find_entry_operator, find_terminal_operator
 from .mapping import Mapping
 from .strategies.strategy import CompositionStrategy
 

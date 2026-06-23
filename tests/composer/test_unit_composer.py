@@ -3,7 +3,6 @@ from json import dumps
 from typing import Any, Dict
 
 import pytest
-
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 
 from ap_management.services.composer.composer import Composer
@@ -57,6 +56,8 @@ def test_stitch(case: ApTestCase, no_ai_composer: Composer):
     mixed_ap = no_ai_composer._stitch(
         case.ap1, case.ap2, case.expected_mappings
     )
+    # Check that the output is a valid AP
+    AnalyticalPattern.model_validate(mixed_ap)
     assert _normalize_graph(mixed_ap) == _normalize_graph(case.expected_ap)
 
 
@@ -71,4 +72,5 @@ async def test_self_composition_no_duplicate_uuids(no_ai_composer: Composer):
     result = await no_ai_composer.compose(ap1, ap2)
 
     node_ids = [str(node.id) for node in result.nodes]
-    assert len(node_ids) == len(set(node_ids)), "Duplicate node UUIDs in self-composed AP"
+    assert len(node_ids) == len(
+        set(node_ids)), "Duplicate node UUIDs in self-composed AP"

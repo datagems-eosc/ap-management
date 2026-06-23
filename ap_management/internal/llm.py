@@ -1,6 +1,8 @@
 from typing import List, Optional
 
 import litellm
+from agent_framework import Agent
+from agent_framework.openai import OpenAIChatCompletionClient
 from litellm import Message, completion
 from pydantic import BaseModel
 
@@ -30,3 +32,16 @@ class LLM:
         )
 
         return response_format.model_validate_json(response.choices[0].message.content)
+
+    def create_agent(self, name: str, instructions: str, tools: Optional[dict] = None, max_tool_iterations: int = 5) -> Agent:
+        return OpenAIChatCompletionClient(
+            api_key=self.api_key,
+            base_url=self.api_base,
+            # Use the model name without the path, e.g. "gpt-4" instead of "openai/gpt-4"
+            model=self.model.split("/")[-1],
+            function_invocation_configuration={"max_iterations": max_tool_iterations},
+        ).as_agent(
+            name=name,
+            instructions=instructions,
+            tools=tools,
+        )

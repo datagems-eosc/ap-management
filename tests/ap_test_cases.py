@@ -27,6 +27,8 @@ class ApTestCase(BaseModel):
     # Correct mapping
     expected_mappings: List[Mapping]
     expected_ap: Optional[AnalyticalPattern] = None
+    # Natural-language task that the matchmaker should resolve to [ap1, ap2]
+    task: Optional[str] = None
 
 
 def _load_ap(filename: str) -> AnalyticalPattern:
@@ -57,7 +59,8 @@ AP_TEST_CASES = [
                 )
             )
         ],
-        expected_ap=_load_ap("composed/01_02.json")
+        expected_ap=_load_ap("composed/01_02.json"),
+        task="Translate a natural-language query to SQL and explain the query with provenance information."
     ),
     ApTestCase(
         name="Multiple outputs to one input",
