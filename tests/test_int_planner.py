@@ -3,7 +3,8 @@ from pathlib import Path
 import pytest
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 
-from ap_management.di import get_composer, get_llm, get_moma_svc
+from ap_management.di import get_composer, get_moma_svc
+from ap_management.internal.llm import LLM
 from ap_management.services.matchmaker import LocalAPCatalog, Matchmaker
 from ap_management.services.planner import Planner
 from ap_management.services.planner_exceptions import NoApFoundError
@@ -13,11 +14,11 @@ _ASSETS_PATH = Path(__file__).parent.parent / "assets"
 
 
 @pytest.fixture
-def planner():
+def planner(llm: LLM) -> Planner:
     moma_svc = get_moma_svc()
     catalog = LocalAPCatalog(_ASSETS_PATH)
     return Planner(
-        matchmaker=Matchmaker(get_llm(), catalog),
+        matchmaker=Matchmaker(llm, catalog),
         composer=get_composer(moma_svc),
         ap_catalog=catalog
     )

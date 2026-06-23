@@ -19,6 +19,8 @@ from testcontainers.core.waiting_utils import wait_for_logs
 from ap_management.generated.moma_management.moma_management_client import (
     MomaManagementClient,
 )
+from ap_management.di import get_llm
+from ap_management.internal.llm import LLM
 from ap_management.services.composer import Composer, SimpleComposition
 from tests.ap_test_cases import AP_TEST_CASES, ApTestCase
 
@@ -49,6 +51,14 @@ def generated_path() -> Path:
 )
 def case(request) -> ApTestCase:
     return request.param
+
+
+@pytest.fixture(scope="session")
+def llm() -> LLM:
+    try:
+        return get_llm()
+    except ValueError:
+        pytest.skip("LLM configuration is not set, skipping integration tests.")
 
 
 @pytest.fixture

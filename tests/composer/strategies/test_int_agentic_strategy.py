@@ -2,18 +2,14 @@ from json import dumps
 
 import pytest
 
-from ap_management.di import get_llm
+from ap_management.internal.llm import LLM
 from ap_management.services.composer.strategies.agentic import AgenticComposition
 from tests.conftest import ApTestCase
 
 
 @pytest.fixture
-def strat() -> AgenticComposition:
-    try:
-        return AgenticComposition(get_llm())
-    except ValueError:
-        pytest.skip(
-            "LLM configuration is not set, skipping agentic composition tests.")
+def strat(llm: LLM) -> AgenticComposition:
+    return AgenticComposition(llm)
 
 
 # @pytest.mark.repeat(10)

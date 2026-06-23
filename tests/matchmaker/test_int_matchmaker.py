@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from ap_management.di import get_llm
+from ap_management.internal.llm import LLM
 from ap_management.services.matchmaker import LocalAPCatalog, Matchmaker
 from tests.ap_test_cases import AP_TEST_CASES, ApTestCase
 
@@ -16,8 +16,8 @@ class ApName:
 
 
 @pytest.fixture
-def matchmaker():
-    return Matchmaker(get_llm(), LocalAPCatalog(_ASSETS_PATH))
+def matchmaker(llm: LLM) -> Matchmaker:
+    return Matchmaker(llm, LocalAPCatalog(_ASSETS_PATH))
 
 
 @pytest.mark.asyncio
