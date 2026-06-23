@@ -40,7 +40,7 @@ class MomaCatalog(APCatalog):
             return []
 
         data = json.loads(raw)
-        items = data if isinstance(data, list) else data.get("items", [])
+        items = data.get("aps")
 
         results: List[AnalyticalPattern] = []
         for item in items:
@@ -55,8 +55,18 @@ class MomaCatalog(APCatalog):
         """
         Retrieve an Analytical Pattern by its ID.
         """
-        raw = await self.moma_svc.api.v1.aps[id].get()
+        raw = await self.moma_svc.api.v1.aps.by_id(id).get()
         if not raw:
             raise ValueError(f"AP with id {id} not found")
-        data = json.loads(raw)
+        data = {
+            "nodes": [
+                {
+                    "id": node.id,
+                    "labels": node.labels,
+                    "properties": node.properties.additional_data if node.properties else {},
+                }
+                for node in (raw.nodes or [])
+            ],
+            "edges": [edge.additional_data for edge in (raw.edges or [])],
+        }
         return AnalyticalPattern.model_validate(data)
