@@ -70,8 +70,8 @@ def get_composer(moma_svc: MomaManagementClient = Depends(get_moma_svc)) -> Comp
 
 
 def get_catalog(moma_svc: MomaManagementClient = Depends(get_moma_svc)) -> APCatalog:
-    return LocalAPCatalog(Path("/workspaces/ap-management/assets"))
-    # return MomaCatalog(moma_svc)
+    # return LocalAPCatalog(Path("/workspaces/ap-management/assets"))
+    return MomaCatalog(moma_svc)
 
 
 def get_matchmaker(catalog: APCatalog = Depends(get_catalog)) -> Matchmaker:
