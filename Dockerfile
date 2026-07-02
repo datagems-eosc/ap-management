@@ -30,4 +30,4 @@ CMD [ "uv", "run", "pytest" ]
 # Actual production image
 FROM builder AS prod
 
-CMD [ "uv", "run", "python", "ap_management/main.py" ]
+CMD [ "uv", "run", "opentelemetry-instrument", "python", "ap_management/main.py" ]
