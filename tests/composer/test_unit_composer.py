@@ -54,7 +54,7 @@ def test_stitch(case: ApTestCase, no_ai_composer: Composer):
         pytest.skip("No expected AP provided for this test case.")
 
     mixed_ap = no_ai_composer._stitch(
-        case.ap1, case.ap2, case.expected_mappings
+        copy.deepcopy(case.ap1), copy.deepcopy(case.ap2), case.expected_mappings
     )
     # Check that the output is a valid AP
     AnalyticalPattern.model_validate(mixed_ap)

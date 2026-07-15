@@ -1,12 +1,15 @@
+from typing import List
 from uuid import uuid4
 
 import structlog
 from moma_management.domain.analytical_pattern import AnalyticalPattern
+from pydantic import BaseModel
 
 from ap_management.generated.moma_management.moma_management_client import (
     MomaManagementClient,
 )
-from ap_management.services.ap_catalog.catalog import APCatalog
+from ap_management.internal.graph_utils import find_entry_operator
+from ap_management.services.ap_catalog.catalog import APCatalog, OperatorPort
 
 from .composer import Composer
 from .composer.exceptions import (
@@ -21,19 +24,27 @@ from .planner_exceptions import (
     NoApFoundError,
     PlannerCompositionError,
 )
+from .value_suggester import SuggestedParameter, ValueSuggester
 
 logger = structlog.get_logger(__name__)
+
+
+class PlanResult(BaseModel):
+    """The AP produced by the planner, plus the parameters needed to instantiate it."""
+    ap: AnalyticalPattern
+    instantiation_parameters: List[SuggestedParameter]
 
 
 class Planner:
     """The planner creates a composition of APs answering a given task."""
 
-    def __init__(self, matchmaker: Matchmaker, composer: Composer, ap_catalog: APCatalog):
+    def __init__(self, matchmaker: Matchmaker, composer: Composer, ap_catalog: APCatalog, value_suggester: ValueSuggester):
         self.matchmaker = matchmaker
         self.composer = composer
         self.ap_catalog = ap_catalog
+        self.value_suggester = value_suggester
 
-    async def plan(self, task: str) -> AnalyticalPattern:
+    async def plan(self, task: str) -> PlanResult:
         logger.info("Planning AP composition", task=task)
 
         try:
@@ -70,16 +81,25 @@ class Planner:
             logger.info(
                 "Single AP resolved, no composition needed", ap_id=str(aps[0].root.id)
             )
-            return aps[0]
+            ap = aps[0]
+        else:
+            logger.info("Composing APs", ap_count=len(aps))
+            try:
+                composed: AnalyticalPattern = aps[0]
+                for i in range(1, len(aps)):
+                    composed = await self.composer.compose(composed, aps[i])
+            except (CompositionInputError, CompositionImpossibleError, CompositionInternalError) as e:
+                logger.error("AP composition failed", error=str(e))
+                raise PlannerCompositionError(
+                    f"Failed to compose APs: {e}") from e
+            ap = composed
 
-        logger.info("Composing APs", ap_count=len(aps))
-        try:
-            composed: AnalyticalPattern = aps[0]
-            for i in range(1, len(aps)):
-                composed = await self.composer.compose(composed, aps[i])
-        except (CompositionInputError, CompositionImpossibleError, CompositionInternalError) as e:
-            logger.error("AP composition failed", error=str(e))
-            raise PlannerCompositionError(f"Failed to compose APs: {e}") from e
+        logger.info(
+            "Planning complete. Suggesting parameters for AP instantiation", ap_id=str(ap.root.id))
 
-        logger.info("Planning complete")
-        return composed
+        entry_op = find_entry_operator(ap)
+        entry_op_inputs = entry_op.properties.get("inputs", [])
+        parameters = OperatorPort.from_properties(entry_op_inputs)
+        runtime_params = self.value_suggester.suggest(task, parameters)
+
+        return PlanResult(ap=ap, instantiation_parameters=runtime_params)

@@ -1,4 +1,4 @@
-from typing import List, Protocol, Self
+from typing import Any, List, Protocol, Self
 
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from pydantic import BaseModel
@@ -13,6 +13,15 @@ class OperatorPort(BaseModel):
     name: str
     type: str
     required: bool = True
+    default: Any | None = None
+
+    @classmethod
+    def from_properties(cls, params: List[dict]) -> List[Self]:
+        return [
+            cls(name=p["name"], type=p["type"],
+                required=p.get("required", True), default=p.get("default"))
+            for p in params
+        ]
 
 
 class APSummary(BaseModel):
@@ -32,16 +41,10 @@ class APSummary(BaseModel):
             id=str(root.id),
             name=root.properties["name"],
             description=root.properties["description"],
-            entry_inputs=[
-                OperatorPort(name=p["name"], type=p["type"],
-                             required=p.get("required", True))
-                for p in entry_op.properties.get("inputs", [])
-            ],
-            terminal_outputs=[
-                OperatorPort(name=p["name"], type=p["type"],
-                             required=p.get("required", True))
-                for p in terminal_op.properties.get("outputs", [])
-            ],
+            entry_inputs=OperatorPort.from_properties(
+                entry_op.properties.get("inputs", [])),
+            terminal_outputs=OperatorPort.from_properties(
+                terminal_op.properties.get("outputs", [])),
         )
 
 

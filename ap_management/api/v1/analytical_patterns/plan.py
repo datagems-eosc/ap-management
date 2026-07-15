@@ -3,12 +3,11 @@ from typing import Never
 
 from fastapi import Depends, HTTPException
 from fastapi.responses import JSONResponse
-from moma_management.domain.analytical_pattern import AnalyticalPattern
 from pydantic import BaseModel
 
 from ap_management.di import get_planner
 from ap_management.middlewares.auth import require_authentication
-from ap_management.services.planner import Planner
+from ap_management.services.planner import Planner, PlanResult
 from ap_management.services.planner_exceptions import (
     ApFetchError,
     MatchmakerError,
@@ -27,7 +26,7 @@ async def plan_ap(
     body: PlanPayload,
     planner: Planner = Depends(get_planner),
     _auth: Never = Depends(require_authentication()),
-) -> AnalyticalPattern:
+) -> PlanResult:
     try:
         result = await planner.plan(body.task)
         return JSONResponse(content=result.model_dump(mode="json", by_alias=True))

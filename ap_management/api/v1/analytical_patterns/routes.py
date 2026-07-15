@@ -21,7 +21,13 @@ router.add_api_route(
     plan_ap,
     methods=["POST"],
     responses={
-        200: {"description": "Planned AnalyticalPattern returned successfully", "model": Dict[str, Any]},
+        200: {
+            "description": (
+                "Planned AnalyticalPattern returned successfully, together with the "
+                "instantiation parameters required to run its entry operator"
+            ),
+            "model": Dict[str, Any],
+        },
         404: {"description": "No AP found for the task", "model": ErrorResponse},
         422: {"description": "APs found but cannot be composed", "model": ErrorResponse},
         502: {"description": "Upstream service failure (LLM or MOMA)", "model": ErrorResponse},

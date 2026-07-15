@@ -20,6 +20,7 @@ from ap_management.services.composer import AgenticComposition, Composer
 from ap_management.services.composer.strategies.simple import SimpleComposition
 from ap_management.services.matchmaker import Matchmaker
 from ap_management.services.planner import Planner
+from ap_management.services.value_suggester import ValueSuggester
 
 from .generated.moma_management.moma_management_client import MomaManagementClient
 from .logger import configure_logging
@@ -78,12 +79,17 @@ def get_matchmaker(catalog: APCatalog = Depends(get_catalog)) -> Matchmaker:
     return Matchmaker(llm=get_llm(), catalog=catalog)
 
 
+def get_value_suggester() -> ValueSuggester:
+    return ValueSuggester(llm=get_llm())
+
+
 def get_planner(
     matchmaker: Matchmaker = Depends(get_matchmaker),
     composer: Composer = Depends(get_composer),
     ap_catalog: APCatalog = Depends(get_catalog),
+    value_suggester: ValueSuggester = Depends(get_value_suggester),
 ) -> Planner:
-    return Planner(matchmaker=matchmaker, composer=composer, ap_catalog=ap_catalog)
+    return Planner(matchmaker=matchmaker, composer=composer, ap_catalog=ap_catalog, value_suggester=value_suggester)
 
 
 @lru_cache(maxsize=1)
