@@ -38,7 +38,7 @@ jobs:
           tags: |
             type=ref,event=tag
           labels: |
-            org.opencontainers.image.source=https://github.com/datagems-eosc/web-api-demo
+            org.opencontainers.image.source=https://github.com/datagems-eosc/ap-management
 
       - name: Build testing Docker image
         id: build-test
