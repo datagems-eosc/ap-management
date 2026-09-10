@@ -8,7 +8,7 @@ from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.generated.nodes.node_schema import Node
 from pydantic import BaseModel
 
-from ap_management.internal.graph_utils import find_entry_operator
+from ap_management.internal.graph_utils import dataflow_inputs, find_entry_operator
 from ap_management.internal.llm import LLM
 from ap_management.services.composer.mapping import Mapping, MappingEndpoint
 
@@ -40,9 +40,13 @@ def _field_schema(f: dict) -> dict:
 
 
 def _extract_op_schema(op: Node, fields_key: str) -> dict:
+    # Inputs supplied at instantiation time are not the LLM's to map: offering them as
+    # mapping targets would only invite a spurious wiring.
+    fields = dataflow_inputs(op) if fields_key == "inputs" else op.properties.get(
+        fields_key, [])
     return {
         "id": str(op.id),
-        fields_key: [_field_schema(f) for f in op.properties.get(fields_key, [])],
+        fields_key: [_field_schema(f) for f in fields],
     }
 
 

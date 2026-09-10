@@ -3,6 +3,7 @@ from typing import List, Tuple
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 
 from ap_management.internal.graph_utils import (
+    dataflow_inputs,
     find_entry_operator,
     find_terminal_operator,
 )
@@ -18,12 +19,15 @@ class SimpleComposition(CompositionStrategy):
         ap2_entry = find_entry_operator(ap2)
 
         ap1_outputs = ap1_terminal.properties.get("outputs")
-        ap2_inputs = ap2_entry.properties.get("inputs")
-
         if ap1_outputs is None:
             return False, "AP1 terminal operator has no 'outputs' property"
-        if ap2_inputs is None:
+        if ap2_entry.properties.get("inputs") is None:
             return False, "AP2 entry operator has no 'inputs' property"
+
+        # Inputs supplied at instantiation time are not wired from AP1, so they must not
+        # count against the match. Every catalogued operator declares dataflow inputs
+        # only, so this is a no-op for them.
+        ap2_inputs = dataflow_inputs(ap2_entry)
 
         if len(ap1_outputs) != len(ap2_inputs):
             return False, "AP1 last operator outputs and AP2 first operator inputs have different lengths"
@@ -40,7 +44,7 @@ class SimpleComposition(CompositionStrategy):
         ap2_entry = find_entry_operator(ap2)
 
         ap1_outputs = ap1_terminal.properties.get("outputs", [])
-        ap2_inputs = ap2_entry.properties.get("inputs", [])
+        ap2_inputs = dataflow_inputs(ap2_entry)
 
         if not ap1_outputs or not ap2_inputs:
             return False, [], "No outputs or inputs to map"
