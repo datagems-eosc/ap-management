@@ -18,6 +18,11 @@ from ap_management.services.ap_catalog.moma_catalog import MomaCatalog
 from ap_management.services.authentication import Authentication
 from ap_management.services.composer import AgenticComposition, Composer
 from ap_management.services.composer.strategies.simple import SimpleComposition
+from ap_management.services.dataset_catalog import DatasetCatalog, MomaDatasetCatalog
+from ap_management.services.magic_operator import (
+    DEFAULT_OPERATOR_NAME,
+    MagicOperatorBuilder,
+)
 from ap_management.services.matchmaker import Matchmaker
 from ap_management.services.planner import Planner
 from ap_management.services.value_suggester import ValueSuggester
@@ -83,13 +88,42 @@ def get_value_suggester() -> ValueSuggester:
     return ValueSuggester(llm=get_llm())
 
 
+def get_dataset_catalog(moma_svc: MomaManagementClient = Depends(get_moma_svc)) -> DatasetCatalog:
+    return MomaDatasetCatalog(moma_svc)
+
+
+def get_magic_operator_builder(
+    moma_svc: MomaManagementClient = Depends(get_moma_svc),
+) -> MagicOperatorBuilder:
+    return MagicOperatorBuilder(
+        llm=get_llm(),
+        moma_svc=moma_svc,
+        # The AP Executor slugifies this into the Consul service name it resolves the
+        # operator under ("Magic Operator" -> "magic-operator"), so it must match the
+        # name the magic operator deployment registers itself with.
+        operator_name=getenv("MAGIC_OPERATOR_NAME", DEFAULT_OPERATOR_NAME),
+        # Left unset on purpose: pinning a version filters Consul on Service.Meta.version,
+        # which consul-k8s Service Sync cannot set.
+        version=getenv("MAGIC_OPERATOR_VERSION") or None,
+    )
+
+
 def get_planner(
     matchmaker: Matchmaker = Depends(get_matchmaker),
     composer: Composer = Depends(get_composer),
     ap_catalog: APCatalog = Depends(get_catalog),
     value_suggester: ValueSuggester = Depends(get_value_suggester),
+    dataset_catalog: DatasetCatalog = Depends(get_dataset_catalog),
+    magic_operator_builder: MagicOperatorBuilder = Depends(get_magic_operator_builder),
 ) -> Planner:
-    return Planner(matchmaker=matchmaker, composer=composer, ap_catalog=ap_catalog, value_suggester=value_suggester)
+    return Planner(
+        matchmaker=matchmaker,
+        composer=composer,
+        ap_catalog=ap_catalog,
+        value_suggester=value_suggester,
+        dataset_catalog=dataset_catalog,
+        magic_operator_builder=magic_operator_builder,
+    )
 
 
 @lru_cache(maxsize=1)

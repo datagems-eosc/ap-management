@@ -1,16 +1,12 @@
 import copy
 from logging import getLogger
-from typing import List, Tuple
+from typing import List
 from uuid import UUID, uuid4
 
-from kiota_abstractions.api_error import APIError
 from moma_management.domain.analytical_pattern import AnalyticalPattern
 from moma_management.domain.generated.edges.edge_schema import Edge, EdgeLabel
 from moma_management.domain.generated.nodes.node_schema import Node
 
-from ap_management.generated.moma_management.api.v1.aps.validate.validate_post_request_body import (
-    ValidatePostRequestBody,
-)
 from ap_management.generated.moma_management.moma_management_client import (
     MomaManagementClient,
 )
@@ -18,6 +14,7 @@ from ap_management.internal.graph_utils import (
     find_entry_operator,
     find_terminal_operator,
 )
+from ap_management.internal.moma_validation import validate_ap
 
 from .exceptions import (
     CompositionImpossibleError,
@@ -97,11 +94,7 @@ class Composer:
         composed_ap = self._stitch(ap1, ap2, mappings)
 
         # And validate it
-        if not self.moma_svc:
-            logger.warning("No MOMA service provided, skipping AP validation")
-            return composed_ap
-
-        ok, errors = await self._validate_ap(composed_ap)
+        ok, errors = await validate_ap(self.moma_svc, composed_ap)
         # TODO: Correction loop
         if not ok:
             raise CompositionInternalError(
@@ -228,20 +221,3 @@ class Composer:
 
         return ap1
 
-    async def _validate_ap(self, ap: AnalyticalPattern) -> Tuple[bool, List[str]]:
-        """
-        Validate the given analytical pattern against the MOMA service.
-        Args:
-            ap: The analytical pattern to be validated.
-        Returns:
-            A tuple containing a boolean indicating whether the AP is valid or not, and a list of error messages if the AP is invalid.
-        """
-        body = ValidatePostRequestBody()
-        body.additional_data = ap.model_dump(by_alias=True, mode="json")
-        try:
-            await self.moma_svc.api.v1.aps.validate.post(body=body)
-        except APIError as e:
-            logger.error(f"Error validating AP: {e}")
-            return False, e.additional_data.get("errors", ["Unknown error during AP validation"])
-
-        return True, []

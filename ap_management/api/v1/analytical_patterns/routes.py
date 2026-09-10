@@ -24,12 +24,21 @@ router.add_api_route(
         200: {
             "description": (
                 "Planned AnalyticalPattern returned successfully, together with the "
-                "instantiation parameters required to run its entry operator"
+                "instantiation parameters required to run each of its operators"
             ),
             "model": Dict[str, Any],
         },
-        404: {"description": "No AP found for the task", "model": ErrorResponse},
-        422: {"description": "APs found but cannot be composed", "model": ErrorResponse},
+        404: {
+            "description": "No AP found for the task, or an unknown dataset ID",
+            "model": ErrorResponse,
+        },
+        422: {
+            "description": (
+                "APs found but cannot be composed, or no requested dataset is "
+                "compatible with the planned AP"
+            ),
+            "model": ErrorResponse,
+        },
         502: {"description": "Upstream service failure (LLM or MOMA)", "model": ErrorResponse},
         500: {"description": "Unexpected internal error during planning", "model": ErrorResponse},
     },

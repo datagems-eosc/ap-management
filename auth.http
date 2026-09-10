@@ -2,7 +2,7 @@
 # This file is a little auth helper to help during development
 # DO NOT COMMIT ANY SENSITIVE DATA IN THIS FILE, USE ENV VARIABLES INSTEAD
 #########################
-@baseUrl = https://datagems-dev.scayle.es
+@baseUrl = https://datagems.scayle.es
 @username = {{$dotenv TEST_USER}}
 @password = {{$dotenv TEST_USER_PASSWORD}}
 
