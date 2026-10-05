@@ -70,6 +70,15 @@ async def test_plan_no_result(planner: Planner):
         await planner.plan("Pinpoint a satellite location")
 
 
+@pytest.mark.asyncio
+async def test_plan_partial_coverage_is_rejected(planner: Planner):
+    """'text to sql' is catalogued, converting SQL to JSON is not: without the magic
+    operator the planner must fail rather than return the first half as a plan."""
+    with pytest.raises(NoApFoundError):
+        await planner.plan(
+            "Convert 'Find my stuff' into SQL and then convert the SQL to JSON")
+
+
 # --- datasets ---------------------------------------------------------------
 
 

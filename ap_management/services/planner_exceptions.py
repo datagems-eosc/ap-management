@@ -7,7 +7,8 @@ class MatchmakerError(PlannerError):
 
 
 class NoApFoundError(PlannerError):
-    """Matchmaker succeeded but returned no steps for the task."""
+    """Matchmaker succeeded but returned no steps for the task, or steps that leave part
+    of it uncovered."""
 
     def __init__(self, reason: str):
         self.reason = reason

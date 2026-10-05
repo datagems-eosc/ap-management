@@ -159,7 +159,7 @@ class Planner:
         """Ask the matchmaker for an ordered list of AP steps.
 
         When it finds nothing: a lone magic step if the caller allowed one, otherwise
-        `NoApFoundError`.
+        `NoApFoundError`. Steps that leave part of the task uncovered: `NoApFoundError`.
         """
         try:
             ap_list = await self.matchmaker.resolve(
@@ -169,6 +169,12 @@ class Planner:
             logger.error("Matchmaker failed", error=str(e))
             raise MatchmakerError(
                 f"Matchmaker failed to process task: {e}") from e
+
+        if ap_list.steps and ap_list.uncovered:
+            logger.info("Task only partially covered",
+                        uncovered=ap_list.uncovered, reasoning=ap_list.reasoning)
+            raise NoApFoundError(
+                f"{ap_list.reasoning} (not covered: {'; '.join(ap_list.uncovered)})")
 
         if ap_list.steps:
             logger.info(

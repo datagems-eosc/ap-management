@@ -53,17 +53,19 @@ class _StubLLM:
 
 
 class _StubMatchmaker:
-    def __init__(self, *steps: TaskResolution):
+    def __init__(self, *steps: TaskResolution, uncovered=()):
         self.steps = list(steps)
+        self.uncovered = list(uncovered)
 
     async def resolve(self, task, datasets=None, *, allow_magic_operator=False):
-        return ProblemResolution(reasoning="stub", steps=self.steps)
+        return ProblemResolution(
+            reasoning="stub", steps=self.steps, uncovered=self.uncovered)
 
 
-def _planner(*steps: TaskResolution) -> Planner:
+def _planner(*steps: TaskResolution, uncovered=()) -> Planner:
     llm = _StubLLM()
     return Planner(
-        matchmaker=_StubMatchmaker(*steps),
+        matchmaker=_StubMatchmaker(*steps, uncovered=uncovered),
         composer=Composer(strategies=[SimpleComposition()], moma_svc=None),
         ap_catalog=LocalAPCatalog(ASSETS),
         value_suggester=ValueSuggester(llm),
@@ -111,6 +113,26 @@ async def test_wired_inputs_get_no_parameter():
 async def test_magic_is_opt_in():
     with pytest.raises(NoApFoundError):
         await _planner().plan("something uncovered")
+
+
+@pytest.mark.asyncio
+async def test_partially_covered_task_is_rejected():
+    """Steps that cover only part of the task are not a plan: returning them would look
+    like an answer while silently dropping the rest."""
+    planner = _planner(
+        _step(NL_TO_SQL_AP), uncovered=["Convert the SQL query to JSON"])
+
+    with pytest.raises(NoApFoundError) as exc:
+        await planner.plan(
+            "Convert 'find my stuff' into SQL and then convert the SQL to JSON")
+    assert "Convert the SQL query to JSON" in exc.value.reason
+
+
+@pytest.mark.asyncio
+async def test_gap_without_steps_still_falls_back_to_magic():
+    result = await _planner(uncovered=["everything"]).plan(
+        "something uncovered", allow_magic_operator=True)
+    assert result.used_magic_operator
 
 
 @pytest.mark.asyncio

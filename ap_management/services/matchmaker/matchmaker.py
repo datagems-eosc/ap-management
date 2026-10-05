@@ -47,6 +47,13 @@ class ProblemResolution(BaseModel):
             "The Composer wires steps[n].terminal_outputs → steps[n+1].entry_inputs."
         )
     )
+    uncovered: List[str] = Field(
+        default_factory=list,
+        description=(
+            "The transformations the task asks for that no step covers, one short "
+            "sentence each. Empty when the steps solve the whole task."
+        ),
+    )
 
 
 class Matchmaker:
@@ -211,6 +218,27 @@ Examples of reasoning that must be rejected:
 If you cannot find an AP whose description directly and obviously matches the stated
 task without inventing unstated requirements, output empty steps.
 
+## Partial coverage
+
+Every transformation the task explicitly asks for must be covered by a step. When the
+catalogue covers some of them but not all, keep the steps you found and list each
+missing transformation in `uncovered`, one short sentence each. Never silently drop
+part of the task.
+
+`uncovered` is only for transformations the task states in so many words. Do not report
+follow-ups you infer the user would also want — executing a generated query, fetching,
+formatting or displaying a result — when the task never asks for them. An AP that
+directly addresses the stated task covers it, even if its output is not the final
+answer the user may ultimately be after.
+
+Examples:
+- Task: "Convert 'find my stuff' into SQL and then convert the SQL to JSON" → a
+  "Text to SQL AP" covers the first half; no AP converts SQL to JSON, and the task asks
+  for it explicitly. Return the Text to SQL step, with
+  `"uncovered": ["Convert the SQL query to JSON"]`.
+- Task: "Find the customers who ordered last month" → a "Text to SQL AP" covers it.
+  Running the query is never asked for: `"uncovered": []`.
+
 ## Reasoning steps
 
 1. Restate the task. Identify the domain and the explicit inputs/outputs the user needs.
@@ -235,7 +263,8 @@ Your final message MUST be raw JSON only — no markdown fences, no prose, nothi
       "role": "<one sentence: what this AP contributes>",
       "analytical_pattern_id": "<exact id returned by search_aps>"
     }
-  ]
+  ],
+  "uncovered": ["<one sentence per transformation no step covers; usually empty>"]
 }
 
 steps[0] executes first; steps[-1] executes last.
@@ -287,4 +316,6 @@ Rules:
 - A magic step may be the only step, when nothing in the catalogue addresses the task.
 - Do not use more than one magic step in a row: collapse consecutive gaps into a single
   magic step whose role describes the whole transformation.
+- A gap is filled with a magic step, not reported: with the magic operator available,
+  `uncovered` stays empty.
 """
