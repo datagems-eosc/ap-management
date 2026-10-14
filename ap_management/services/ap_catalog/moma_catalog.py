@@ -31,6 +31,9 @@ class MomaCatalog(APCatalog):
         """
         params = _QueryParams()
         params.search_q = task
+        # Let the matchmaker decide the threshold for search results
+        # We might not get optimal results form the get go
+        params.search_threshold = 0
 
         raw = await self.moma_svc.api.v1.aps.empty_path_segment.get(
             RequestConfiguration(query_parameters=params)
